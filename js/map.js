@@ -1,6 +1,6 @@
 'use strict';
 
-// объект список объявлений
+// объект - список объявлений
 var pinList = {
   length: 8,
 
@@ -63,6 +63,7 @@ var pinList = {
     }
   },
 
+  // генерирование значений
   getRandomValue: function (min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
   },
@@ -136,9 +137,9 @@ var pinList = {
     return address;
   },
 
-  // создать объявление с заданными параметрами
+  // создать элемент массива - объявление с заданными параметрами
   createPin: function (avatar, title, address, price, type, rooms, guests, checkin, checkout, features) {
-    // Объявление
+    // Объявление - элемент массива
     var pin = {
       author: {
         avatar: avatar
@@ -161,11 +162,10 @@ var pinList = {
         y: address.y
       }
     };
-
     return pin;
   },
 
-  // сгенерировать и получить массив объявлений
+  // получить массив объявлений
   getValues: function () {
     for (var i = 0; i < this.length; i++) {
       this.values[i] = this.createPin(this.getAvatar(), this.getTitle(), this.getAddress(),
@@ -173,5 +173,89 @@ var pinList = {
           this.getCheckIn(), this.getCheckOut(), this.getFeatures());
     }
     return this.values;
+  },
+};
+
+// метка на карте как элемент dom-дерева
+var pinElement = {
+  PIN_INNER_HTML: '<img src="{{avatar}}" class="rounded" width="40" height="40">',
+  PIN_TEG: 'div',
+  PIN_CLASS: 'pin',
+  PIN_WIDTH: 56,
+  PIN_HEIGHT: 75,
+
+  renderPin: function (x, y, avatar) {
+    var element = document.createElement(this.PIN_TEG);
+    var deltaX = Math.floor(this.PIN_WIDTH / 2);
+    var deltaY = this.PIN_HEIGHT;
+    element.className = this.PIN_CLASS;
+    element.style.left = (x + deltaX) + 'px';
+    element.style.top = (y + deltaY) + 'px';
+    element.innerHTML = this.PIN_INNER_HTML.replace('{{avatar}}', avatar);
+    return element;
+  },
+
+  renderPinList: function (pins) {
+    var fragment = document.createDocumentFragment();
+    var mapElement = document.querySelector('.tokyo__pin-map');
+    for (var i = 0; i < pins.length; i++) {
+      fragment.appendChild(this.renderPin(pins[i].location.x, pins[i].location.y,
+          pins[i].author.avatar));
+    }
+    mapElement.appendChild(fragment);
   }
 };
+
+var offerElement = {
+  FEATURE_TEG: 'span',
+  FEATURE_CLASS_TEMPL: 'feature__image feature__image--',
+
+  typeHouse: {
+    'flat': 'Квартира',
+    'house': 'Дом',
+    'bungalo': 'Бунгало'
+  },
+
+  renderFeature: function (feature) {
+    var element = document.createElement(this.FEATURE_TEG);
+    element.className = this.FEATURE_CLASS_TEMPL + feature;
+    return element;
+  },
+
+  renderFeatureList: function (features) {
+    var fragment = document.createDocumentFragment();
+    for (var i = 0; i < features.length; i++) {
+      fragment.appendChild(this.renderFeature(features[i]));
+    }
+    return fragment;
+  },
+
+  renderOffer: function (title, address, price, type, countRooms, countGuests,
+      checkin, checkout, features, description, avatar) {
+    var dialogElement = document.querySelector('.dialog');
+    var dialogPanelElement = document.querySelector('.dialog__panel');
+    var offerTemplate = document.querySelector('#lodge-template').content;
+    var element = offerTemplate.cloneNode(true);
+    element.querySelector('.lodge__title').textContent = title;
+    element.querySelector('.lodge__address').textContent = address;
+    element.querySelector('.lodge__price').textContent = price + '\u20bd/ночь';
+    element.querySelector('.lodge__type').textContent = this.typeHouse[type];
+    element.querySelector('.lodge__rooms-and-guests').textContent = 'Для ' +
+        countGuests + ' гостей в ' + countRooms + ' комнатах';
+    element.querySelector('.lodge__checkin-time').textContent = 'Заезд после {{checkin}}, выезд до           {{checkout}}'.replace('{{checkin}}', checkin).replace('{{checkout}}', checkout);
+    element.querySelector('.lodge__features').appendChild(this.renderFeatureList(features));
+    element.querySelector('.lodge__description').textContent = description;
+
+    dialogElement.appendChild(element);
+    dialogElement.removeChild(dialogPanelElement);
+
+    dialogElement.querySelector('.dialog__title > img').src = avatar;
+    return element;
+  }
+};
+
+var pins = pinList.getValues();
+pinElement.renderPinList(pins);
+offerElement.renderOffer(pins[0].offer.title, pins[0].offer.address, pins[0].offer.price,
+    pins[0].offer.type, pins[0].offer.rooms, pins[0].offer.guests, pins[0].offer.checkin, pins[0].offer.checkout,
+    pins[0].offer.features, pins[0].offer.description, pins[0].author.avatar);
