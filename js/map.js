@@ -1,8 +1,18 @@
 'use strict';
 
+var PIN_LIST_LENGHT = 8;
+var PIN_INNER_HTML = '<img src="{{avatar}}" class="rounded" width="40" height="40">';
+var PIN_TEG = 'div';
+var PIN_CLASS = 'pin';
+var PIN_WIDTH = 56;
+var PIN_HEIGHT = 75;
+var FEATURE_TEG = 'span';
+var FEATURE_CLASS_TEMPL = 'feature__image feature__image--';
+var AVATAR_PATH_TEMPL = 'img/avatars/user{{xx}}.png';
+
 // объект - список объявлений
 var pinList = {
-  length: 8,
+  length: PIN_LIST_LENGHT,
 
   // массив объявлений
   values: [],
@@ -10,7 +20,7 @@ var pinList = {
   // словарь правил и возможных значений объявлений
   dictionaryOffers: {
     avatarList: {
-      pathTemplate: 'img/avatars/user{{xx}}.png',
+      pathTemplate: AVATAR_PATH_TEMPL,
       isUsed: []
     },
 
@@ -178,20 +188,15 @@ var pinList = {
 
 // метка на карте как элемент dom-дерева
 var pinElement = {
-  PIN_INNER_HTML: '<img src="{{avatar}}" class="rounded" width="40" height="40">',
-  PIN_TEG: 'div',
-  PIN_CLASS: 'pin',
-  PIN_WIDTH: 56,
-  PIN_HEIGHT: 75,
 
   renderPin: function (x, y, avatar) {
-    var element = document.createElement(this.PIN_TEG);
-    var deltaX = Math.floor(this.PIN_WIDTH / 2);
-    var deltaY = this.PIN_HEIGHT;
-    element.className = this.PIN_CLASS;
+    var element = document.createElement(PIN_TEG);
+    var deltaX = Math.floor(PIN_WIDTH / 2);
+    var deltaY = PIN_HEIGHT;
+    element.className = PIN_CLASS;
     element.style.left = (x + deltaX) + 'px';
     element.style.top = (y + deltaY) + 'px';
-    element.innerHTML = this.PIN_INNER_HTML.replace('{{avatar}}', avatar);
+    element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', avatar);
     return element;
   },
 
@@ -207,8 +212,6 @@ var pinElement = {
 };
 
 var offerElement = {
-  FEATURE_TEG: 'span',
-  FEATURE_CLASS_TEMPL: 'feature__image feature__image--',
 
   typeHouse: {
     'flat': 'Квартира',
@@ -217,8 +220,8 @@ var offerElement = {
   },
 
   renderFeature: function (feature) {
-    var element = document.createElement(this.FEATURE_TEG);
-    element.className = this.FEATURE_CLASS_TEMPL + feature;
+    var element = document.createElement(FEATURE_TEG);
+    element.className = FEATURE_CLASS_TEMPL + feature;
     return element;
   },
 
