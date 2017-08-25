@@ -1,6 +1,6 @@
 'use strict';
 
-var PIN_LIST_LENGHT = 8;
+var OFFER_LIST_LENGHT = 8;
 var PIN_INNER_HTML = '<img src="{{avatar}}" class="rounded" width="40" height="40">';
 var PIN_TEG = 'div';
 var PIN_CLASS = 'pin';
@@ -11,8 +11,8 @@ var FEATURE_CLASS_TEMPL = 'feature__image feature__image--';
 var AVATAR_PATH_TEMPL = 'img/avatars/user{{xx}}.png';
 
 // объект - список объявлений
-var pinList = {
-  length: PIN_LIST_LENGHT,
+var offerList = {
+  length: OFFER_LIST_LENGHT,
 
   // массив объявлений
   values: [],
@@ -148,9 +148,9 @@ var pinList = {
   },
 
   // создать элемент массива - объявление с заданными параметрами
-  createPin: function (avatar, title, address, price, type, rooms, guests, checkin, checkout, features) {
+  createOfferItem: function (avatar, title, address, price, type, rooms, guests, checkin, checkout, features) {
     // Объявление - элемент массива
-    var pin = {
+    var offerItem = {
       author: {
         avatar: avatar
       },
@@ -172,13 +172,13 @@ var pinList = {
         y: address.y
       }
     };
-    return pin;
+    return offerItem;
   },
 
   // получить массив объявлений
   getValues: function () {
     for (var i = 0; i < this.length; i++) {
-      this.values[i] = this.createPin(this.getAvatar(), this.getTitle(), this.getAddress(),
+      this.values[i] = this.createOfferItem(this.getAvatar(), this.getTitle(), this.getAddress(),
           this.getPrice(), this.getType(), this.getRooms(), this.getGuests(),
           this.getCheckIn(), this.getCheckOut(), this.getFeatures());
     }
@@ -186,33 +186,32 @@ var pinList = {
   },
 };
 
-// метка на карте как элемент dom-дерева
+// метка на карте как элемент DOM-дерева
 var pinElement = {
 
-  renderPin: function (x, y, avatar) {
+  renderPin: function (offerItem) {
     var element = document.createElement(PIN_TEG);
     var deltaX = Math.floor(PIN_WIDTH / 2);
     var deltaY = PIN_HEIGHT;
     element.className = PIN_CLASS;
-    element.style.left = (x + deltaX) + 'px';
-    element.style.top = (y + deltaY) + 'px';
-    element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', avatar);
+    element.style.left = (offerItem.location.x + deltaX) + 'px';
+    element.style.top = (offerItem.location.y + deltaY) + 'px';
+    element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', offerItem.author.avatar);
     return element;
   },
 
-  renderPinList: function (pins) {
+  renderPinList: function (offers) {
     var fragment = document.createDocumentFragment();
     var mapElement = document.querySelector('.tokyo__pin-map');
-    for (var i = 0; i < pins.length; i++) {
-      fragment.appendChild(this.renderPin(pins[i].location.x, pins[i].location.y,
-          pins[i].author.avatar));
+    for (var i = 0; i < offers.length; i++) {
+      fragment.appendChild(this.renderPin(offers[i]));
     }
     mapElement.appendChild(fragment);
   }
 };
 
+// объявление как элемент DOM-дерева
 var offerElement = {
-
   typeHouse: {
     'flat': 'Квартира',
     'house': 'Дом',
@@ -233,32 +232,26 @@ var offerElement = {
     return fragment;
   },
 
-  renderOffer: function (title, address, price, type, countRooms, countGuests,
-      checkin, checkout, features, description, avatar) {
+  renderOffer: function (offerItem) {
     var dialogElement = document.querySelector('.dialog');
     var dialogPanelElement = document.querySelector('.dialog__panel');
     var offerTemplate = document.querySelector('#lodge-template').content;
     var element = offerTemplate.cloneNode(true);
-    element.querySelector('.lodge__title').textContent = title;
-    element.querySelector('.lodge__address').textContent = address;
-    element.querySelector('.lodge__price').textContent = price + '\u20bd/ночь';
-    element.querySelector('.lodge__type').textContent = this.typeHouse[type];
+    element.querySelector('.lodge__title').textContent = offerItem.offer.title;
+    element.querySelector('.lodge__address').textContent = offerItem.offer.address;
+    element.querySelector('.lodge__price').textContent = offerItem.offer.price + '\u20bd/ночь';
+    element.querySelector('.lodge__type').textContent = this.typeHouse[offerItem.offer.type];
     element.querySelector('.lodge__rooms-and-guests').textContent = 'Для ' +
-        countGuests + ' гостей в ' + countRooms + ' комнатах';
-    element.querySelector('.lodge__checkin-time').textContent = 'Заезд после {{checkin}}, выезд до           {{checkout}}'.replace('{{checkin}}', checkin).replace('{{checkout}}', checkout);
-    element.querySelector('.lodge__features').appendChild(this.renderFeatureList(features));
-    element.querySelector('.lodge__description').textContent = description;
-
-    dialogElement.appendChild(element);
-    dialogElement.removeChild(dialogPanelElement);
-
-    dialogElement.querySelector('.dialog__title > img').src = avatar;
-    return element;
+        offerItem.offer.guests + ' гостей в ' + offerItem.offer.rooms + ' комнатах';
+    element.querySelector('.lodge__checkin-time').textContent = 'Заезд после {{checkin}}, выезд до           {{checkout}}'.replace('{{checkin}}', offerItem.offer.checkin).replace('{{checkout}}', offerItem.offer.checkout);
+    element.querySelector('.lodge__features').appendChild(this.renderFeatureList(offerItem.offer.features));
+    element.querySelector('.lodge__description').textContent = offerItem.offer.description;
+    dialogElement.replaceChild(element, dialogPanelElement);
+    dialogElement.querySelector('.dialog__title > img').src = offerItem.author.avatar;
   }
 };
 
-var pins = pinList.getValues();
-pinElement.renderPinList(pins);
-offerElement.renderOffer(pins[0].offer.title, pins[0].offer.address, pins[0].offer.price,
-    pins[0].offer.type, pins[0].offer.rooms, pins[0].offer.guests, pins[0].offer.checkin, pins[0].offer.checkout,
-    pins[0].offer.features, pins[0].offer.description, pins[0].author.avatar);
+// получить массив с объявлениями
+var offers = offerList.getValues();
+pinElement.renderPinList(offers);
+offerElement.renderOffer(offers[0]);
