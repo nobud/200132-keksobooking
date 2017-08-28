@@ -4,11 +4,35 @@ var OFFER_LIST_LENGHT = 8;
 var PIN_INNER_HTML = '<img src="{{avatar}}" class="rounded" width="40" height="40">';
 var PIN_TEG = 'div';
 var PIN_CLASS = 'pin';
+var PIN_ACTIVE_CLASS = 'pin--active';
 var PIN_WIDTH = 56;
 var PIN_HEIGHT = 75;
 var FEATURE_TEG = 'span';
 var FEATURE_CLASS_TEMPL = 'feature__image feature__image--';
 var AVATAR_PATH_TEMPL = 'img/avatars/user{{xx}}.png';
+
+var activePin = null;
+var mapElement = document.querySelector('.tokyo__pin-map');
+var dialogElement = document.querySelector('.dialog');
+var dialogTitle = dialogElement.querySelector('.dialog__title');
+var dialogClose = dialogTitle.querySelector('.dialog__close');
+
+var keyCode = {
+  ESC: 27,
+  ENTER: 13
+};
+
+window.keyboard = {
+  isEnterPressed: function (evt) {
+    return evt.keyCode === keyCode.ENTER;
+  },
+  isEscPressed: function (evt) {
+    return evt.keyCode === keyCode.ESC;
+  },
+  isTabPressed: function (evt) {
+    return evt.keyCode === keyCode.TAB;
+  }
+};
 
 // объект - список объявлений
 var offerList = {
@@ -187,7 +211,16 @@ var offerList = {
 };
 
 // метка на карте как элемент DOM-дерева
-var pinElement = {
+var pinObject = {
+  avatarToIndexLink: {},
+
+  setPinToIndexLink: function (avatar, index) {
+    this.avatarToIndexLink[avatar] = index;
+  },
+
+  getIndexOfPin: function (avatar) {
+    return this.avatarToIndexLink[avatar];
+  },
 
   renderPin: function (offerItem) {
     var element = document.createElement(PIN_TEG);
@@ -197,25 +230,26 @@ var pinElement = {
     element.style.left = (offerItem.location.x + deltaX) + 'px';
     element.style.top = (offerItem.location.y + deltaY) + 'px';
     element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', offerItem.author.avatar);
+    element.tabIndex = 0;
     return element;
   },
 
   renderPinList: function (offers) {
     var fragment = document.createDocumentFragment();
-    var mapElement = document.querySelector('.tokyo__pin-map');
     for (var i = 0; i < offers.length; i++) {
       fragment.appendChild(this.renderPin(offers[i]));
+      this.setPinToIndexLink(offers[i].author.avatar, i);
     }
     mapElement.appendChild(fragment);
   }
 };
 
 // объявление как элемент DOM-дерева
-var offerElement = {
+var offerObject = {
   typeHouse: {
-    'flat': 'Квартира',
-    'house': 'Дом',
-    'bungalo': 'Бунгало'
+    flat: 'Квартира',
+    house: 'Дом',
+    bungalo: 'Бунгало'
   },
 
   renderFeature: function (feature) {
@@ -232,9 +266,7 @@ var offerElement = {
     return fragment;
   },
 
-  renderOffer: function (offerItem) {
-    var dialogElement = document.querySelector('.dialog');
-    var dialogPanelElement = document.querySelector('.dialog__panel');
+  createOfferElement: function (offerItem) {
     var offerTemplate = document.querySelector('#lodge-template').content;
     var element = offerTemplate.cloneNode(true);
     element.querySelector('.lodge__title').textContent = offerItem.offer.title;
@@ -246,12 +278,108 @@ var offerElement = {
     element.querySelector('.lodge__checkin-time').textContent = 'Заезд после {{checkin}}, выезд до           {{checkout}}'.replace('{{checkin}}', offerItem.offer.checkin).replace('{{checkout}}', offerItem.offer.checkout);
     element.querySelector('.lodge__features').appendChild(this.renderFeatureList(offerItem.offer.features));
     element.querySelector('.lodge__description').textContent = offerItem.offer.description;
-    dialogElement.replaceChild(element, dialogPanelElement);
-    dialogElement.querySelector('.dialog__title > img').src = offerItem.author.avatar;
+    return element;
+  },
+
+  changeDialogPanel: function (newDialogPanelElement) {
+    var dialogPanelElement = document.querySelector('.dialog__panel');
+    dialogElement.replaceChild(newDialogPanelElement, dialogPanelElement);
+  },
+
+  renderOffer: function (offerItem) {
+    dialogTitle.querySelector('img').src = offerItem.author.avatar;
+    this.changeDialogPanel(this.createOfferElement(offerItem));
   }
 };
 
-// получить массив с объявлениями
+var resetActivePin = function () {
+  // снять выделение с ранее активной метки
+  if (activePin) {
+    activePin.classList.remove(PIN_ACTIVE_CLASS);
+    activePin = null;
+  }
+};
+
+var changeActivePin = function (pin) {
+  // сбросить ранее активную метку
+  resetActivePin();
+  // сделать активной метку, по которой произошел клик
+  activePin = pin;
+  activePin.classList.add(PIN_ACTIVE_CLASS);
+};
+
+var changeActiveOffer = function (pin) {
+  // получить путь к файлу аватара
+  var avatar = pin.querySelector('img').attributes.src.textContent;
+  // узнать индекс объявления и отобразить данные выбранного объявления в диалоговом окне
+  offerObject.renderOffer(offers[pinObject.getIndexOfPin(avatar)]);
+};
+
+var showActiveOffer = function (pin) {
+  // установить новую активную метку
+  changeActivePin(pin);
+  // отобразить данные объявления, соответствующие активной метке
+  changeActiveOffer(pin);
+  // добавить обработчики
+  dialogClose.addEventListener('click', onDialogCloseClick);
+  dialogClose.addEventListener('keydown', onDialogCloseEnterPress);
+  document.addEventListener('keydown', onDialogEscPress);
+  // показать диалоговое окно
+  dialogElement.classList.remove('hidden');
+  dialogElement.focus();
+
+};
+
+var closeActiveOffer = function () {
+  // сбросить активную метку
+  resetActivePin();
+  // удалить обработчики
+  dialogClose.removeEventListener('click', onDialogCloseClick);
+  dialogClose.removeEventListener('keydown', onDialogCloseEnterPress);
+  document.removeEventListener('keydown', onDialogEscPress);
+  // скрыть диалоговое окно
+  dialogElement.classList.add('hidden');
+};
+
+// обработчик клика по метке
+var onPinClick = function (evt) {
+  var pin = evt.target.closest('.pin');
+  // если клик по метке и она не является главной меткой
+  if (pin && !pin.classList.contains('pin__main')) {
+    showActiveOffer(pin);
+  }
+};
+
+// обработчик нажатия Enter на метке
+var onPinEnterPress = function (evt) {
+  if (window.keyboard.isEnterPressed(evt)) {
+    if (evt.target) {
+      showActiveOffer(evt.target);
+    }
+  }
+};
+
+// обработчик клика по кнопке закрытия окна
+var onDialogCloseClick = function () {
+  closeActiveOffer();
+};
+
+var onDialogCloseEnterPress = function (evt) {
+  if (window.keyboard.isEnterPressed(evt)) {
+    closeActiveOffer();
+  }
+};
+
+var onDialogEscPress = function (evt) {
+  if (window.keyboard.isEscPressed(evt)) {
+    closeActiveOffer();
+  }
+};
+
+// сгенерировать и получить массив с объявлениями
 var offers = offerList.getValues();
-pinElement.renderPinList(offers);
-offerElement.renderOffer(offers[0]);
+// отрисовать метки
+pinObject.renderPinList(offers);
+// добавить обработчики для меток
+mapElement.addEventListener('click', onPinClick);
+mapElement.addEventListener('keydown', onPinEnterPress);
