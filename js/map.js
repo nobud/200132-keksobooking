@@ -14,8 +14,17 @@ var AVATAR_PATH_TEMPL = 'img/avatars/user{{xx}}.png';
 var activePin = null;
 var mapElement = document.querySelector('.tokyo__pin-map');
 var dialogElement = document.querySelector('.dialog');
-var dialogTitle = dialogElement.querySelector('.dialog__title');
-var dialogClose = dialogTitle.querySelector('.dialog__close');
+var dialogTitleElement = dialogElement.querySelector('.dialog__title');
+var dialogCloseElement = dialogTitleElement.querySelector('.dialog__close');
+
+var noticeFormElement = document.querySelector('.notice__form');
+var noticeTimeinElement = noticeFormElement.querySelector('#timein');
+var noticeTimeoutElement = noticeFormElement.querySelector('#timeout');
+var noticeTypeHouseElement = noticeFormElement.querySelector('#type');
+var noticePriceElement = noticeFormElement.querySelector('#price');
+var noticeRoomNumberElement = noticeFormElement.querySelector('#room_number');
+var noticeCapacityElement = noticeFormElement.querySelector('#capacity');
+
 
 var keyCode = {
   ESC: 27,
@@ -32,6 +41,22 @@ window.keyboard = {
   isTabPressed: function (evt) {
     return evt.keyCode === keyCode.TAB;
   }
+};
+
+// соответствие минимальной цене типу жилья
+var noticeTypeHouseToMinPrice = {
+  bungalo: 0,
+  flat: 1000,
+  house: 5000,
+  palace: 10000
+};
+
+// соответствие количества комнат возможным вариантам Capacity
+var noticeRoomNumberToCapacity = {
+  '1': ['1'],
+  '2': ['1', '2'],
+  '3': ['1', '2', '3'],
+  '100': ['0']
 };
 
 // объект - список объявлений
@@ -287,11 +312,12 @@ var offerObject = {
   },
 
   renderOffer: function (offerItem) {
-    dialogTitle.querySelector('img').src = offerItem.author.avatar;
+    dialogTitleElement.querySelector('img').src = offerItem.author.avatar;
     this.changeDialogPanel(this.createOfferElement(offerItem));
   }
 };
 
+// сбросить ранее активную метку
 var resetActivePin = function () {
   // снять выделение с ранее активной метки
   if (activePin) {
@@ -300,14 +326,16 @@ var resetActivePin = function () {
   }
 };
 
+// изменить активную метку
 var changeActivePin = function (pin) {
   // сбросить ранее активную метку
   resetActivePin();
-  // сделать активной метку, по которой произошел клик
+  // сделать активной метку pin
   activePin = pin;
   activePin.classList.add(PIN_ACTIVE_CLASS);
 };
 
+// изменить активное объявление
 var changeActiveOffer = function (pin) {
   // получить путь к файлу аватара
   var avatar = pin.querySelector('img').attributes.src.textContent;
@@ -315,46 +343,51 @@ var changeActiveOffer = function (pin) {
   offerObject.renderOffer(offers[pinObject.getIndexOfPin(avatar)]);
 };
 
-var showActiveOffer = function (pin) {
+// открыть окно с активным объявлением
+var openActiveOffer = function (pin) {
   // установить новую активную метку
   changeActivePin(pin);
   // отобразить данные объявления, соответствующие активной метке
   changeActiveOffer(pin);
   // добавить обработчики
-  dialogClose.addEventListener('click', onDialogCloseClick);
-  dialogClose.addEventListener('keydown', onDialogCloseEnterPress);
+  dialogCloseElement.addEventListener('click', onDialogCloseClick);
+  dialogCloseElement.addEventListener('keydown', onDialogCloseEnterPress);
   document.addEventListener('keydown', onDialogEscPress);
   // показать диалоговое окно
   dialogElement.classList.remove('hidden');
   dialogElement.focus();
-
 };
 
+// закрыть окно с активным объявлением
 var closeActiveOffer = function () {
+  var lastFocusedPin = activePin;
   // сбросить активную метку
   resetActivePin();
   // удалить обработчики
-  dialogClose.removeEventListener('click', onDialogCloseClick);
-  dialogClose.removeEventListener('keydown', onDialogCloseEnterPress);
+  dialogCloseElement.removeEventListener('click', onDialogCloseClick);
+  dialogCloseElement.removeEventListener('keydown', onDialogCloseEnterPress);
   document.removeEventListener('keydown', onDialogEscPress);
   // скрыть диалоговое окно
   dialogElement.classList.add('hidden');
+  if (lastFocusedPin) {
+    lastFocusedPin.focus();
+  }
 };
 
 // обработчик клика по метке
 var onPinClick = function (evt) {
   var pin = evt.target.closest('.pin');
-  // если клик по метке и она не является главной меткой
+  // если клик по метке и она не является "главной" меткой
   if (pin && !pin.classList.contains('pin__main')) {
-    showActiveOffer(pin);
+    openActiveOffer(pin);
   }
 };
 
 // обработчик нажатия Enter на метке
 var onPinEnterPress = function (evt) {
   if (window.keyboard.isEnterPressed(evt)) {
-    if (evt.target) {
-      showActiveOffer(evt.target);
+    if (evt.target.className === 'pin') {
+      openActiveOffer(evt.target);
     }
   }
 };
@@ -364,22 +397,62 @@ var onDialogCloseClick = function () {
   closeActiveOffer();
 };
 
+// обработчик нажатия Enter на кнопке закрытия окна
 var onDialogCloseEnterPress = function (evt) {
   if (window.keyboard.isEnterPressed(evt)) {
     closeActiveOffer();
   }
 };
 
+// обработчик нажатия ESC при открытом диалоговом окне (закрыть диалоговое окно)
 var onDialogEscPress = function (evt) {
   if (window.keyboard.isEscPressed(evt)) {
     closeActiveOffer();
   }
 };
 
+// обработчик изменения времени заезда (синхронизация со временем выезда)
+var onNoticeTimeinChange = function (evt) {
+  noticeTimeoutElement.value = evt.target.value;
+};
+
+// обработчик изменения типа жилья (синхронизация с минимальной ценой)
+var onNoticeTypeHouseChange = function (evt) {
+  var minPrice = noticeTypeHouseToMinPrice[evt.target.value];
+  noticePriceElement.min = minPrice;
+  noticePriceElement.value = minPrice;
+};
+
+var setDefaultCapacityForRoomsCount = function (roomsCountValue) {
+  if (noticeRoomNumberToCapacity[roomsCountValue].length) {
+    noticeCapacityElement.value = noticeRoomNumberToCapacity[roomsCountValue][noticeRoomNumberToCapacity[roomsCountValue].length - 1];
+  }
+};
+
+// установить список возможных вариантов количества гостей для заданного количества комнат
+var setItemsCapacityForRoomsCount = function (roomsCountValue) {
+  for (var i = 0; i < noticeCapacityElement.options.length; i++) {
+    noticeCapacityElement.options[i].style.display = noticeRoomNumberToCapacity[roomsCountValue].includes(noticeCapacityElement.options[i].value) ?
+      'block' : 'none';
+  }
+  setDefaultCapacityForRoomsCount(roomsCountValue);
+};
+
+// обработчик изменения количества комнат
+var onNoticeRoomNumberChange = function (evt) {
+  setItemsCapacityForRoomsCount(evt.target.value);
+};
+
 // сгенерировать и получить массив с объявлениями
 var offers = offerList.getValues();
 // отрисовать метки
 pinObject.renderPinList(offers);
-// добавить обработчики для меток
+// добавить обработчики для меток на карте
 mapElement.addEventListener('click', onPinClick);
 mapElement.addEventListener('keydown', onPinEnterPress);
+// добавить обработчики элементов формы запроса
+noticeTimeinElement.addEventListener('change', onNoticeTimeinChange);
+noticeTypeHouseElement.addEventListener('change', onNoticeTypeHouseChange);
+noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
+
+setItemsCapacityForRoomsCount('1');

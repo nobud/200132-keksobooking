@@ -50,6 +50,10 @@ button[type=submit]:active {
     color: white;
 }
 
+input[type=number] {
+    -moz-appearance:textfield;
+}
+
 input[type=text], input[type=number], select, textarea {
     box-sizing: border-box;
 
