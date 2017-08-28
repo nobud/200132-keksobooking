@@ -1,8 +1,42 @@
 'use strict';
 
+var OFFER_LIST_LENGHT = 8;
+var PIN_INNER_HTML = '<img src="{{avatar}}" class="rounded" width="40" height="40">';
+var PIN_TEG = 'div';
+var PIN_CLASS = 'pin';
+var PIN_ACTIVE_CLASS = 'pin--active';
+var PIN_WIDTH = 56;
+var PIN_HEIGHT = 75;
+var FEATURE_TEG = 'span';
+var FEATURE_CLASS_TEMPL = 'feature__image feature__image--';
+var AVATAR_PATH_TEMPL = 'img/avatars/user{{xx}}.png';
+
+var activePin = null;
+var mapElement = document.querySelector('.tokyo__pin-map');
+var dialogElement = document.querySelector('.dialog');
+var dialogTitle = dialogElement.querySelector('.dialog__title');
+var dialogClose = dialogTitle.querySelector('.dialog__close');
+
+var keyCode = {
+  ESC: 27,
+  ENTER: 13
+};
+
+window.keyboard = {
+  isEnterPressed: function (evt) {
+    return evt.keyCode === keyCode.ENTER;
+  },
+  isEscPressed: function (evt) {
+    return evt.keyCode === keyCode.ESC;
+  },
+  isTabPressed: function (evt) {
+    return evt.keyCode === keyCode.TAB;
+  }
+};
+
 // объект - список объявлений
-var pinList = {
-  length: 8,
+var offerList = {
+  length: OFFER_LIST_LENGHT,
 
   // массив объявлений
   values: [],
@@ -10,7 +44,7 @@ var pinList = {
   // словарь правил и возможных значений объявлений
   dictionaryOffers: {
     avatarList: {
-      pathTemplate: 'img/avatars/user{{xx}}.png',
+      pathTemplate: AVATAR_PATH_TEMPL,
       isUsed: []
     },
 
@@ -138,9 +172,9 @@ var pinList = {
   },
 
   // создать элемент массива - объявление с заданными параметрами
-  createPin: function (avatar, title, address, price, type, rooms, guests, checkin, checkout, features) {
+  createOfferItem: function (avatar, title, address, price, type, rooms, guests, checkin, checkout, features) {
     // Объявление - элемент массива
-    var pin = {
+    var offerItem = {
       author: {
         avatar: avatar
       },
@@ -162,13 +196,13 @@ var pinList = {
         y: address.y
       }
     };
-    return pin;
+    return offerItem;
   },
 
   // получить массив объявлений
   getValues: function () {
     for (var i = 0; i < this.length; i++) {
-      this.values[i] = this.createPin(this.getAvatar(), this.getTitle(), this.getAddress(),
+      this.values[i] = this.createOfferItem(this.getAvatar(), this.getTitle(), this.getAddress(),
           this.getPrice(), this.getType(), this.getRooms(), this.getGuests(),
           this.getCheckIn(), this.getCheckOut(), this.getFeatures());
     }
@@ -176,49 +210,51 @@ var pinList = {
   },
 };
 
-// метка на карте как элемент dom-дерева
-var pinElement = {
-  PIN_INNER_HTML: '<img src="{{avatar}}" class="rounded" width="40" height="40">',
-  PIN_TEG: 'div',
-  PIN_CLASS: 'pin',
-  PIN_WIDTH: 56,
-  PIN_HEIGHT: 75,
+// метка на карте как элемент DOM-дерева
+var pinObject = {
+  avatarToIndexLink: {},
 
-  renderPin: function (x, y, avatar) {
-    var element = document.createElement(this.PIN_TEG);
-    var deltaX = Math.floor(this.PIN_WIDTH / 2);
-    var deltaY = this.PIN_HEIGHT;
-    element.className = this.PIN_CLASS;
-    element.style.left = (x + deltaX) + 'px';
-    element.style.top = (y + deltaY) + 'px';
-    element.innerHTML = this.PIN_INNER_HTML.replace('{{avatar}}', avatar);
+  setPinToIndexLink: function (avatar, index) {
+    this.avatarToIndexLink[avatar] = index;
+  },
+
+  getIndexOfPin: function (avatar) {
+    return this.avatarToIndexLink[avatar];
+  },
+
+  renderPin: function (offerItem) {
+    var element = document.createElement(PIN_TEG);
+    var deltaX = Math.floor(PIN_WIDTH / 2);
+    var deltaY = PIN_HEIGHT;
+    element.className = PIN_CLASS;
+    element.style.left = (offerItem.location.x + deltaX) + 'px';
+    element.style.top = (offerItem.location.y + deltaY) + 'px';
+    element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', offerItem.author.avatar);
+    element.tabIndex = 0;
     return element;
   },
 
-  renderPinList: function (pins) {
+  renderPinList: function (offers) {
     var fragment = document.createDocumentFragment();
-    var mapElement = document.querySelector('.tokyo__pin-map');
-    for (var i = 0; i < pins.length; i++) {
-      fragment.appendChild(this.renderPin(pins[i].location.x, pins[i].location.y,
-          pins[i].author.avatar));
+    for (var i = 0; i < offers.length; i++) {
+      fragment.appendChild(this.renderPin(offers[i]));
+      this.setPinToIndexLink(offers[i].author.avatar, i);
     }
     mapElement.appendChild(fragment);
   }
 };
 
-var offerElement = {
-  FEATURE_TEG: 'span',
-  FEATURE_CLASS_TEMPL: 'feature__image feature__image--',
-
+// объявление как элемент DOM-дерева
+var offerObject = {
   typeHouse: {
-    'flat': 'Квартира',
-    'house': 'Дом',
-    'bungalo': 'Бунгало'
+    flat: 'Квартира',
+    house: 'Дом',
+    bungalo: 'Бунгало'
   },
 
   renderFeature: function (feature) {
-    var element = document.createElement(this.FEATURE_TEG);
-    element.className = this.FEATURE_CLASS_TEMPL + feature;
+    var element = document.createElement(FEATURE_TEG);
+    element.className = FEATURE_CLASS_TEMPL + feature;
     return element;
   },
 
@@ -230,32 +266,120 @@ var offerElement = {
     return fragment;
   },
 
-  renderOffer: function (title, address, price, type, countRooms, countGuests,
-      checkin, checkout, features, description, avatar) {
-    var dialogElement = document.querySelector('.dialog');
-    var dialogPanelElement = document.querySelector('.dialog__panel');
+  createOfferElement: function (offerItem) {
     var offerTemplate = document.querySelector('#lodge-template').content;
     var element = offerTemplate.cloneNode(true);
-    element.querySelector('.lodge__title').textContent = title;
-    element.querySelector('.lodge__address').textContent = address;
-    element.querySelector('.lodge__price').textContent = price + '\u20bd/ночь';
-    element.querySelector('.lodge__type').textContent = this.typeHouse[type];
+    element.querySelector('.lodge__title').textContent = offerItem.offer.title;
+    element.querySelector('.lodge__address').textContent = offerItem.offer.address;
+    element.querySelector('.lodge__price').textContent = offerItem.offer.price + '\u20bd/ночь';
+    element.querySelector('.lodge__type').textContent = this.typeHouse[offerItem.offer.type];
     element.querySelector('.lodge__rooms-and-guests').textContent = 'Для ' +
-        countGuests + ' гостей в ' + countRooms + ' комнатах';
-    element.querySelector('.lodge__checkin-time').textContent = 'Заезд после {{checkin}}, выезд до           {{checkout}}'.replace('{{checkin}}', checkin).replace('{{checkout}}', checkout);
-    element.querySelector('.lodge__features').appendChild(this.renderFeatureList(features));
-    element.querySelector('.lodge__description').textContent = description;
-
-    dialogElement.appendChild(element);
-    dialogElement.removeChild(dialogPanelElement);
-
-    dialogElement.querySelector('.dialog__title > img').src = avatar;
+        offerItem.offer.guests + ' гостей в ' + offerItem.offer.rooms + ' комнатах';
+    element.querySelector('.lodge__checkin-time').textContent = 'Заезд после {{checkin}}, выезд до           {{checkout}}'.replace('{{checkin}}', offerItem.offer.checkin).replace('{{checkout}}', offerItem.offer.checkout);
+    element.querySelector('.lodge__features').appendChild(this.renderFeatureList(offerItem.offer.features));
+    element.querySelector('.lodge__description').textContent = offerItem.offer.description;
     return element;
+  },
+
+  changeDialogPanel: function (newDialogPanelElement) {
+    var dialogPanelElement = document.querySelector('.dialog__panel');
+    dialogElement.replaceChild(newDialogPanelElement, dialogPanelElement);
+  },
+
+  renderOffer: function (offerItem) {
+    dialogTitle.querySelector('img').src = offerItem.author.avatar;
+    this.changeDialogPanel(this.createOfferElement(offerItem));
   }
 };
 
-var pins = pinList.getValues();
-pinElement.renderPinList(pins);
-offerElement.renderOffer(pins[0].offer.title, pins[0].offer.address, pins[0].offer.price,
-    pins[0].offer.type, pins[0].offer.rooms, pins[0].offer.guests, pins[0].offer.checkin, pins[0].offer.checkout,
-    pins[0].offer.features, pins[0].offer.description, pins[0].author.avatar);
+var resetActivePin = function () {
+  // снять выделение с ранее активной метки
+  if (activePin) {
+    activePin.classList.remove(PIN_ACTIVE_CLASS);
+    activePin = null;
+  }
+};
+
+var changeActivePin = function (pin) {
+  // сбросить ранее активную метку
+  resetActivePin();
+  // сделать активной метку, по которой произошел клик
+  activePin = pin;
+  activePin.classList.add(PIN_ACTIVE_CLASS);
+};
+
+var changeActiveOffer = function (pin) {
+  // получить путь к файлу аватара
+  var avatar = pin.querySelector('img').attributes.src.textContent;
+  // узнать индекс объявления и отобразить данные выбранного объявления в диалоговом окне
+  offerObject.renderOffer(offers[pinObject.getIndexOfPin(avatar)]);
+};
+
+var showActiveOffer = function (pin) {
+  // установить новую активную метку
+  changeActivePin(pin);
+  // отобразить данные объявления, соответствующие активной метке
+  changeActiveOffer(pin);
+  // добавить обработчики
+  dialogClose.addEventListener('click', onDialogCloseClick);
+  dialogClose.addEventListener('keydown', onDialogCloseEnterPress);
+  document.addEventListener('keydown', onDialogEscPress);
+  // показать диалоговое окно
+  dialogElement.classList.remove('hidden');
+  dialogElement.focus();
+
+};
+
+var closeActiveOffer = function () {
+  // сбросить активную метку
+  resetActivePin();
+  // удалить обработчики
+  dialogClose.removeEventListener('click', onDialogCloseClick);
+  dialogClose.removeEventListener('keydown', onDialogCloseEnterPress);
+  document.removeEventListener('keydown', onDialogEscPress);
+  // скрыть диалоговое окно
+  dialogElement.classList.add('hidden');
+};
+
+// обработчик клика по метке
+var onPinClick = function (evt) {
+  var pin = evt.target.closest('.pin');
+  // если клик по метке и она не является главной меткой
+  if (pin && !pin.classList.contains('pin__main')) {
+    showActiveOffer(pin);
+  }
+};
+
+// обработчик нажатия Enter на метке
+var onPinEnterPress = function (evt) {
+  if (window.keyboard.isEnterPressed(evt)) {
+    if (evt.target) {
+      showActiveOffer(evt.target);
+    }
+  }
+};
+
+// обработчик клика по кнопке закрытия окна
+var onDialogCloseClick = function () {
+  closeActiveOffer();
+};
+
+var onDialogCloseEnterPress = function (evt) {
+  if (window.keyboard.isEnterPressed(evt)) {
+    closeActiveOffer();
+  }
+};
+
+var onDialogEscPress = function (evt) {
+  if (window.keyboard.isEscPressed(evt)) {
+    closeActiveOffer();
+  }
+};
+
+// сгенерировать и получить массив с объявлениями
+var offers = offerList.getValues();
+// отрисовать метки
+pinObject.renderPinList(offers);
+// добавить обработчики для меток
+mapElement.addEventListener('click', onPinClick);
+mapElement.addEventListener('keydown', onPinEnterPress);
