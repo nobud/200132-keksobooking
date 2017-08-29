@@ -412,8 +412,12 @@ var onDialogEscPress = function (evt) {
 };
 
 // обработчик изменения времени заезда (синхронизация со временем выезда)
-var onNoticeTimeinChange = function (evt) {
-  noticeTimeoutElement.value = evt.target.value;
+var onNoticeTimeInOrOutChange = function (evt) {
+  if (evt.target === noticeTimeinElement) {
+    noticeTimeoutElement.value = evt.target.value;
+  } else {
+    noticeTimeinElement.value = evt.target.value;
+  }
 };
 
 // обработчик изменения типа жилья (синхронизация с минимальной ценой)
@@ -443,6 +447,21 @@ var onNoticeRoomNumberChange = function (evt) {
   setItemsCapacityForRoomsCount(evt.target.value);
 };
 
+//
+var onNoticeElementInvalid = function (evt) {
+  if (!evt.target.validity.valid) {
+    evt.target.classList.add('invalid');
+  }
+};
+
+var onNoticeElementChange = function (evt) {
+  if (!evt.target.validity.valid) {
+    evt.target.classList.add('invalid');
+  } else {
+    evt.target.classList.remove('invalid');
+  }
+};
+
 // сгенерировать и получить массив с объявлениями
 var offers = offerList.getValues();
 // отрисовать метки
@@ -451,8 +470,11 @@ pinObject.renderPinList(offers);
 mapElement.addEventListener('click', onPinClick);
 mapElement.addEventListener('keydown', onPinEnterPress);
 // добавить обработчики элементов формы запроса
-noticeTimeinElement.addEventListener('change', onNoticeTimeinChange);
+noticeTimeinElement.addEventListener('change', onNoticeTimeInOrOutChange);
+noticeTimeoutElement.addEventListener('change', onNoticeTimeInOrOutChange);
 noticeTypeHouseElement.addEventListener('change', onNoticeTypeHouseChange);
 noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
+noticeFormElement.addEventListener('invalid', onNoticeElementInvalid, true);
+noticeFormElement.addEventListener('change', onNoticeElementChange);
 
 setItemsCapacityForRoomsCount('1');
