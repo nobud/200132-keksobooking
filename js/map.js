@@ -420,11 +420,16 @@ var onNoticeTimeInOrOutChange = function (evt) {
   }
 };
 
-// обработчик изменения типа жилья (синхронизация с минимальной ценой)
-var onNoticeTypeHouseChange = function (evt) {
-  var minPrice = noticeTypeHouseToMinPrice[evt.target.value];
+// синхронизация типа жилья с минимальной ценой
+var setMinPriceforTypeHouse = function (typeHouse) {
+  var minPrice = noticeTypeHouseToMinPrice[typeHouse];
   noticePriceElement.min = minPrice;
   noticePriceElement.value = minPrice;
+};
+
+// обработчик изменения типа жилья (синхронизация с минимальной ценой)
+var onNoticeTypeHouseChange = function (evt) {
+  setMinPriceforTypeHouse(evt.target.value);
 };
 
 var setDefaultCapacityForRoomsCount = function (roomsCountValue) {
@@ -447,7 +452,6 @@ var onNoticeRoomNumberChange = function (evt) {
   setItemsCapacityForRoomsCount(evt.target.value);
 };
 
-//
 var onNoticeElementInvalid = function (evt) {
   if (!evt.target.validity.valid) {
     evt.target.classList.add('invalid');
@@ -477,4 +481,5 @@ noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
 noticeFormElement.addEventListener('invalid', onNoticeElementInvalid, true);
 noticeFormElement.addEventListener('change', onNoticeElementChange);
 
-setItemsCapacityForRoomsCount('1');
+setItemsCapacityForRoomsCount(noticeRoomNumberElement.value);
+setMinPriceforTypeHouse(noticeTypeHouseElement.value);
