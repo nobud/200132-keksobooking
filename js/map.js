@@ -60,6 +60,7 @@ var noticeRoomNumberToCapacity = {
 };
 
 // объект - список объявлений
+// генерирует список объявлений по заданным правилам
 var offerList = {
   length: OFFER_LIST_LENGHT,
 
@@ -196,7 +197,7 @@ var offerList = {
     return address;
   },
 
-  // создать элемент массива - объявление с заданными параметрами
+  // создать элемент массива объявлений - объявление с заданными параметрами
   createOfferItem: function (avatar, title, address, price, type, rooms, guests, checkin, checkout, features) {
     // Объявление - элемент массива
     var offerItem = {
@@ -224,57 +225,66 @@ var offerList = {
     return offerItem;
   },
 
-  // получить массив объявлений
-  getValues: function () {
+  // сгенерировать массив объявлений
+  generateValues: function () {
     for (var i = 0; i < this.length; i++) {
       this.values[i] = this.createOfferItem(this.getAvatar(), this.getTitle(), this.getAddress(),
           this.getPrice(), this.getType(), this.getRooms(), this.getGuests(),
           this.getCheckIn(), this.getCheckOut(), this.getFeatures());
     }
+  },
+
+  // получить массив объявлений
+  getValues: function () {
+    this.generateValues();
     return this.values;
-  },
-};
-
-// метка на карте как элемент DOM-дерева
-var pinObject = {
-  avatarToIndexLink: {},
-
-  setPinToIndexLink: function (avatar, index) {
-    this.avatarToIndexLink[avatar] = index;
-  },
-
-  getIndexOfPin: function (avatar) {
-    return this.avatarToIndexLink[avatar];
-  },
-
-  renderPin: function (offerItem) {
-    var element = document.createElement(PIN_TEG);
-    var deltaX = Math.floor(PIN_WIDTH / 2);
-    var deltaY = PIN_HEIGHT;
-    element.className = PIN_CLASS;
-    element.style.left = (offerItem.location.x + deltaX) + 'px';
-    element.style.top = (offerItem.location.y + deltaY) + 'px';
-    element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', offerItem.author.avatar);
-    element.tabIndex = 0;
-    return element;
-  },
-
-  renderPinList: function (offers) {
-    var fragment = document.createDocumentFragment();
-    for (var i = 0; i < offers.length; i++) {
-      fragment.appendChild(this.renderPin(offers[i]));
-      this.setPinToIndexLink(offers[i].author.avatar, i);
-    }
-    mapElement.appendChild(fragment);
   }
 };
 
-// объявление как элемент DOM-дерева
+
+// объявление
 var offerObject = {
+  offerItems: [],
+
   typeHouse: {
     flat: 'Квартира',
     house: 'Дом',
     bungalo: 'Бунгало'
+  },
+
+  // объект - метка
+  // отрисовывает метки на карте
+  pin: {
+    avatarToIndex: {},
+
+    setPinToIndex: function (avatar, index) {
+      this.avatarToIndex[avatar] = index;
+    },
+
+    getIndexOfPin: function (avatar) {
+      return this.avatarToIndex[avatar];
+    },
+
+    renderPin: function (offerItem) {
+      var element = document.createElement(PIN_TEG);
+      var deltaX = Math.floor(PIN_WIDTH / 2);
+      var deltaY = PIN_HEIGHT;
+      element.className = PIN_CLASS;
+      element.style.left = (offerItem.location.x + deltaX) + 'px';
+      element.style.top = (offerItem.location.y + deltaY) + 'px';
+      element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', offerItem.author.avatar);
+      element.tabIndex = 0;
+      return element;
+    },
+
+    renderPinList: function (offers) {
+      var fragment = document.createDocumentFragment();
+      for (var i = 0; i < offers.length; i++) {
+        fragment.appendChild(this.renderPin(offers[i]));
+        this.setPinToIndex(offers[i].author.avatar, i);
+      }
+      mapElement.appendChild(fragment);
+    }
   },
 
   renderFeature: function (feature) {
@@ -317,6 +327,7 @@ var offerObject = {
   }
 };
 
+
 // сбросить ранее активную метку
 var resetActivePin = function () {
   // снять выделение с ранее активной метки
@@ -340,7 +351,7 @@ var changeActiveOffer = function (pin) {
   // получить путь к файлу аватара
   var avatar = pin.querySelector('img').attributes.src.textContent;
   // узнать индекс объявления и отобразить данные выбранного объявления в диалоговом окне
-  offerObject.renderOffer(offers[pinObject.getIndexOfPin(avatar)]);
+  offerObject.renderOffer(offerObject.offerItems[offerObject.pin.getIndexOfPin(avatar)]);
 };
 
 // открыть окно с активным объявлением
@@ -432,6 +443,7 @@ var onNoticeTypeHouseChange = function (evt) {
   setMinPriceforTypeHouse(evt.target.value);
 };
 
+// установить количество гостей по умолчанию для заданного количества комнат
 var setDefaultCapacityForRoomsCount = function (roomsCountValue) {
   if (noticeRoomNumberToCapacity[roomsCountValue].length) {
     noticeCapacityElement.value = noticeRoomNumberToCapacity[roomsCountValue][noticeRoomNumberToCapacity[roomsCountValue].length - 1];
@@ -452,12 +464,15 @@ var onNoticeRoomNumberChange = function (evt) {
   setItemsCapacityForRoomsCount(evt.target.value);
 };
 
+// обработка события не валидности элемента формы Notice
 var onNoticeElementInvalid = function (evt) {
   if (!evt.target.validity.valid) {
     evt.target.classList.add('invalid');
   }
 };
 
+// обработка события change элемента формы Notice
+// при валидности элемента сбрасывать соответствующий класс
 var onNoticeElementChange = function (evt) {
   if (!evt.target.validity.valid) {
     evt.target.classList.add('invalid');
@@ -466,20 +481,34 @@ var onNoticeElementChange = function (evt) {
   }
 };
 
-// сгенерировать и получить массив с объявлениями
-var offers = offerList.getValues();
-// отрисовать метки
-pinObject.renderPinList(offers);
-// добавить обработчики для меток на карте
-mapElement.addEventListener('click', onPinClick);
-mapElement.addEventListener('keydown', onPinEnterPress);
-// добавить обработчики элементов формы запроса
-noticeTimeinElement.addEventListener('change', onNoticeTimeInOrOutChange);
-noticeTimeoutElement.addEventListener('change', onNoticeTimeInOrOutChange);
-noticeTypeHouseElement.addEventListener('change', onNoticeTypeHouseChange);
-noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
-noticeFormElement.addEventListener('invalid', onNoticeElementInvalid, true);
-noticeFormElement.addEventListener('change', onNoticeElementChange);
+// инициализация формы Notice
+var initNoticeForm = function () {
+  // установить синхронизации полей
+  setItemsCapacityForRoomsCount(noticeRoomNumberElement.value);
+  setMinPriceforTypeHouse(noticeTypeHouseElement.value);
+};
 
-setItemsCapacityForRoomsCount(noticeRoomNumberElement.value);
-setMinPriceforTypeHouse(noticeTypeHouseElement.value);
+// отрисовать страницу
+var renderPage = function () {
+  // отрисовать метки
+  offerObject.offerItems = offerList.getValues();
+  offerObject.pin.renderPinList(offerObject.offerItems);
+  // добавить обработчики для меток на карте
+  mapElement.addEventListener('click', onPinClick);
+  mapElement.addEventListener('keydown', onPinEnterPress);
+  // добавить обработчики элементов формы запроса
+  noticeTimeinElement.addEventListener('change', onNoticeTimeInOrOutChange);
+  noticeTimeoutElement.addEventListener('change', onNoticeTimeInOrOutChange);
+  noticeTypeHouseElement.addEventListener('change', onNoticeTypeHouseChange);
+  noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
+  noticeFormElement.addEventListener('invalid', onNoticeElementInvalid, true);
+  noticeFormElement.addEventListener('change', onNoticeElementChange);
+};
+
+window.addEventListener('load', function () {
+  renderPage();
+});
+
+window.addEventListener('pageshow', function () {
+  initNoticeForm();
+});
