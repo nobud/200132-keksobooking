@@ -50,6 +50,10 @@ button[type=submit]:active {
     color: white;
 }
 
+input[type=number] {
+    -moz-appearance:textfield;
+}
+
 input[type=text], input[type=number], select, textarea {
     box-sizing: border-box;
 
@@ -664,4 +668,8 @@ select option:hover {
 
 .rounded {
     border-radius: 50%;
+}
+
+.invalid {
+    box-shadow: 0 0 2px 2px #ff0000;
 }
