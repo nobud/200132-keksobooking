@@ -7,6 +7,8 @@
   var PIN_CLASS = 'pin';
   var PIN_WIDTH = 56;
   var PIN_HEIGHT = 75;
+  var PIN_MAIN_WIDTH = 75;
+  var PIN_MAIN_HEIGHT = 94;
   var PIN_ACTIVE_CLASS = 'pin--active';
 
   var avatarToIndex = {};
@@ -16,19 +18,38 @@
     avatarToIndex[avatar] = index;
   };
 
+  // вычислить позицию метки на карте с учетом размера метки
+  var calcPinMapPosition = function (location, isMainPin) {
+    var offsetX = isMainPin ? Math.floor(PIN_MAIN_WIDTH / 2) : Math.floor(PIN_WIDTH / 2);
+    var offsetY = isMainPin ? PIN_MAIN_HEIGHT : PIN_HEIGHT;
+    var position = {};
+    position.x = location.x - offsetX;
+    position.y = location.y - offsetY;
+    return position;
+  };
+
   var renderPin = function (offerItem) {
     var element = document.createElement(PIN_TEG);
-    var deltaX = Math.floor(PIN_WIDTH / 2);
-    var deltaY = PIN_HEIGHT;
+    var positionPin = calcPinMapPosition(offerItem.location);
     element.className = PIN_CLASS;
-    element.style.left = (offerItem.location.x + deltaX) + 'px';
-    element.style.top = (offerItem.location.y + deltaY) + 'px';
+    element.style.left = positionPin.x + 'px';
+    element.style.top = positionPin.y + 'px';
     element.innerHTML = PIN_INNER_HTML.replace('{{avatar}}', offerItem.author.avatar);
     element.tabIndex = 0;
     return element;
   };
 
   window.pin = {
+    // вычислить координаты адреса, на который указывает метка (с учетом ее размера)
+    calcPinLocation: function (position, isMainPin) {
+      var offsetX = isMainPin ? Math.floor(PIN_MAIN_WIDTH / 2) : Math.floor(PIN_WIDTH / 2);
+      var offsetY = isMainPin ? PIN_MAIN_HEIGHT : PIN_HEIGHT;
+      var location = {};
+      location.x = position.x + offsetX;
+      location.y = position.y + offsetY;
+      return location;
+    },
+
     // получить индекс объявления, которое соответствует заданной pin (метке)
     getPinIndex: function (pin) {
       // получить путь к файлу аватара метки
