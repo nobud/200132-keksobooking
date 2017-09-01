@@ -2,6 +2,7 @@
 'use strict';
 
 (function () {
+  var ADDRESS_TEXT = 'x: {{x}}, y: {{y}}';
   var noticeFormElement = document.querySelector('.notice__form');
   var noticeTimeinElement = noticeFormElement.querySelector('#timein');
   var noticeTimeoutElement = noticeFormElement.querySelector('#timeout');
@@ -9,6 +10,7 @@
   var noticePriceElement = noticeFormElement.querySelector('#price');
   var noticeRoomNumberElement = noticeFormElement.querySelector('#room_number');
   var noticeCapacityElement = noticeFormElement.querySelector('#capacity');
+  var noticeAddressElement = noticeFormElement.querySelector('#address');
 
   // соответствие минимальной цены типу жилья
   var noticeTypeHouseToMinPrice = {
@@ -89,6 +91,8 @@
     // установить синхронизации полей формы
     setItemsCapacityForRoomsCount(noticeRoomNumberElement.value);
     setMinPriceforTypeHouse(noticeTypeHouseElement.value);
+    // отобразить адрес, на который указывает метка адреса (pinMain на карте)
+    window.form.setNewAddress(window.map.getPinMainLocation());
   };
 
   // добавить обработчики элементов формы запроса
@@ -108,4 +112,10 @@
   window.addEventListener('pageshow', onNoticeFormShow);
 
   window.addEventListener('load', onNoticeFormLoad);
+
+  window.form = {
+    setNewAddress: function (location) {
+      noticeAddressElement.value = ADDRESS_TEXT.replace('{{x}}', location.x).replace('{{y}}', location.y);
+    }
+  };
 })();
