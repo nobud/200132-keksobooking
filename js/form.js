@@ -92,7 +92,7 @@
     setItemsCapacityForRoomsCount(noticeRoomNumberElement.value);
     setMinPriceforTypeHouse(noticeTypeHouseElement.value);
     // отобразить адрес, на который указывает метка адреса (pinMain на карте)
-    window.form.setNewAddress(window.map.getPinMainLocation());
+    window.form.setNewAddress(window.movePin.getPinMainLocation());
   };
 
   // добавить обработчики элементов формы запроса
