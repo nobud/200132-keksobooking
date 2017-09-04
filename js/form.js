@@ -12,7 +12,7 @@
   var noticeCapacityElement = noticeFormElement.querySelector('#capacity');
   var noticeAddressElement = noticeFormElement.querySelector('#address');
 
-  // соответствие минимальной цены типу жилья
+  // соответствие типа жилья и минимальной цены
   var noticeTypeHouseToMinPrice = {
     bungalo: 0,
     flat: 1000,
@@ -28,46 +28,56 @@
     '100': ['0']
   };
 
-  // обработчик изменения времени заезда (синхронизация со временем выезда)
-  var onNoticeTimeInOrOutChange = function (evt) {
-    if (evt.target === noticeTimeinElement) {
-      noticeTimeoutElement.value = evt.target.value;
-    } else {
-      noticeTimeinElement.value = evt.target.value;
+  // соответствие checkin значению checkout
+  var noticeCheckinToCheckout = {
+    '12:00': '12:00',
+    '13:00': '13:00',
+    '14:00': '14:00'
+  };
+
+  // соответствие checkout значению checkin
+  var noticeCheckoutToCheckin = {
+    '12:00': '12:00',
+    '13:00': '13:00',
+    '14:00': '14:00'
+  };
+
+  var syncValueAndMinValue = function (element, value) {
+    element.min = value;
+    element.value = value;
+  };
+
+  var syncValueAndValue = function (element, value) {
+    element.value = value;
+  };
+
+  var syncValueAndValueList = function (element, values) {
+    for (var i = 0; i < element.options.length; i++) {
+      element.options[i].style.display = values.includes(element.options[i].value) ? 'block' : 'none';
+    }
+    if (values.length) {
+      element.value = values[values.length - 1];
     }
   };
 
-  // синхронизация типа жилья с минимальной ценой
-  var setMinPriceforTypeHouse = function (typeHouse) {
-    var minPrice = noticeTypeHouseToMinPrice[typeHouse];
-    noticePriceElement.min = minPrice;
-    noticePriceElement.value = minPrice;
+  // обработчик изменения времени заезда (синхронизация со временем выезда)
+  var onNoticeTimeInChange = function (evt) {
+    window.synchronizeFields(evt.target, noticeTimeoutElement, noticeCheckinToCheckout, syncValueAndValue);
+  };
+
+  // обработчик изменения времени выезда (синхронизация со временем заезда)
+  var onNoticeTimeOutChange = function (evt) {
+    window.synchronizeFields(evt.target, noticeTimeinElement, noticeCheckoutToCheckin, syncValueAndValue);
   };
 
   // обработчик изменения типа жилья (синхронизация с минимальной ценой)
   var onNoticeTypeHouseChange = function (evt) {
-    setMinPriceforTypeHouse(evt.target.value);
-  };
-
-  // установить количество гостей по умолчанию для заданного количества комнат
-  var setDefaultCapacityForRoomsCount = function (roomsCountValue) {
-    if (noticeRoomNumberToCapacity[roomsCountValue].length) {
-      noticeCapacityElement.value = noticeRoomNumberToCapacity[roomsCountValue][noticeRoomNumberToCapacity[roomsCountValue].length - 1];
-    }
-  };
-
-  // установить список возможных вариантов количества гостей для заданного количества комнат
-  var setItemsCapacityForRoomsCount = function (roomsCountValue) {
-    for (var i = 0; i < noticeCapacityElement.options.length; i++) {
-      noticeCapacityElement.options[i].style.display = noticeRoomNumberToCapacity[roomsCountValue].includes(noticeCapacityElement.options[i].value) ?
-        'block' : 'none';
-    }
-    setDefaultCapacityForRoomsCount(roomsCountValue);
+    window.synchronizeFields(evt.target, noticePriceElement, noticeTypeHouseToMinPrice, syncValueAndMinValue);
   };
 
   // обработчик изменения количества комнат
   var onNoticeRoomNumberChange = function (evt) {
-    setItemsCapacityForRoomsCount(evt.target.value);
+    window.synchronizeFields(evt.target, noticeCapacityElement, noticeRoomNumberToCapacity, syncValueAndValueList);
   };
 
   // обработка события не валидности элемента формы Notice
@@ -89,16 +99,17 @@
 
   var onNoticeFormShow = function () {
     // установить синхронизации полей формы
-    setItemsCapacityForRoomsCount(noticeRoomNumberElement.value);
-    setMinPriceforTypeHouse(noticeTypeHouseElement.value);
+    window.synchronizeFields(noticeRoomNumberElement, noticeCapacityElement, noticeRoomNumberToCapacity, syncValueAndValueList);
+    window.synchronizeFields(noticeTypeHouseElement, noticePriceElement, noticeTypeHouseToMinPrice, syncValueAndMinValue);
+    window.synchronizeFields(noticeTimeinElement, noticeTimeoutElement, noticeCheckinToCheckout, syncValueAndValue);
     // отобразить адрес, на который указывает метка адреса (pinMain на карте)
     window.form.setNewAddress(window.movePin.getPinMainLocation());
   };
 
   // добавить обработчики элементов формы запроса
   var addNoticeFormHandlers = function () {
-    noticeTimeinElement.addEventListener('change', onNoticeTimeInOrOutChange);
-    noticeTimeoutElement.addEventListener('change', onNoticeTimeInOrOutChange);
+    noticeTimeinElement.addEventListener('change', onNoticeTimeInChange);
+    noticeTimeoutElement.addEventListener('change', onNoticeTimeOutChange);
     noticeTypeHouseElement.addEventListener('change', onNoticeTypeHouseChange);
     noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
     noticeFormElement.addEventListener('invalid', onNoticeElementInvalid, true);
