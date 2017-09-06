@@ -9,11 +9,17 @@
   var PIN_WIDTH = 56;
   var PIN_HEIGHT = 75;
 
-  var avatarToIndex = {};
+  // соответствие адреса метки индексу объявления в массиве
+  var locationToIndex = {};
   var activePin = null;
 
-  var setPinToIndex = function (avatar, index) {
-    avatarToIndex[avatar] = index;
+  var getParentPinHeight = function (pin) {
+    return pin.closest('.tokyo').clientHeight;
+  };
+
+  var setPinToIndex = function (location, index) {
+    var locationString = location.x + ' ' + location.y;
+    locationToIndex[locationString] = index;
   };
 
   var renderPin = function (offerItem, parentHeight) {
@@ -51,16 +57,19 @@
 
     // получить индекс объявления, которое соответствует заданной pin (метке)
     getPinIndex: function (pin) {
-      // получить путь к файлу аватара метки
-      var avatar = pin.querySelector('img').attributes.src.textContent;
-      return avatarToIndex[avatar];
+      // получить адрес (location), которому соответствует метка
+      var positionPin = {};
+      positionPin.x = pin.offsetLeft;
+      positionPin.y = pin.offsetTop;
+      var locationPin = this.calcPinLocation(positionPin, pin.clientWidth, pin.clientHeight, getParentPinHeight(pin));
+      return locationToIndex[locationPin.x + ' ' + locationPin.y];
     },
 
     renderPinList: function (offers, parentHeight) {
       var fragment = document.createDocumentFragment();
       for (var i = 0; i < offers.length; i++) {
         fragment.appendChild(renderPin(offers[i], parentHeight));
-        setPinToIndex(offers[i].author.avatar, i);
+        setPinToIndex(offers[i].location, i);
       }
       return fragment;
     },
