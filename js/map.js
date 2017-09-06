@@ -2,6 +2,8 @@
 
 (function () {
   var mapElement = document.querySelector('.tokyo__pin-map');
+  var mapHeight = mapElement.parentElement.clientHeight;
+  var mapWidth = mapElement.parentElement.clientWidth;
   // данные объявлений
   var dataOffers = [];
 
@@ -35,11 +37,20 @@
     // получить данные с объявлениями
     dataOffers = window.data.getValues();
     // отрисовать метки
-    mapElement.appendChild(window.pin.renderPinList(dataOffers));
+    mapElement.appendChild(window.pin.renderPinList(dataOffers, mapHeight));
     // добавить обработчики событий для меток на карте
     mapElement.addEventListener('click', onPinClick);
     mapElement.addEventListener('keydown', onPinEnterPress);
   };
 
   window.addEventListener('load', onMapLoad);
+
+  window.map = {
+    getMapWidth: function () {
+      return mapWidth;
+    },
+    getMapHeight: function () {
+      return mapHeight;
+    }
+  };
 })();
