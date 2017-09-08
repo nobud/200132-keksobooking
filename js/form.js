@@ -3,7 +3,9 @@
 
 (function () {
   var ADDRESS_TEXT = 'x: {{x}}, y: {{y}}';
-  var noticeFormElement = document.querySelector('.notice__form');
+  var URL_NEW_OFFER = 'https://1510.dump.academy/keksobooking';
+  var noticeElement = document.querySelector('.notice');
+  var noticeFormElement = noticeElement.querySelector('.notice__form');
   var noticeTimeinElement = noticeFormElement.querySelector('#timein');
   var noticeTimeoutElement = noticeFormElement.querySelector('#timeout');
   var noticeTypeHouseElement = noticeFormElement.querySelector('#type');
@@ -11,6 +13,7 @@
   var noticeRoomNumberElement = noticeFormElement.querySelector('#room_number');
   var noticeCapacityElement = noticeFormElement.querySelector('#capacity');
   var noticeAddressElement = noticeFormElement.querySelector('#address');
+  var messageElement = null;
 
   // соответствие типа жилья и минимальной цены
   var noticeTypeHouseToMinPrice = {
@@ -80,15 +83,20 @@
     window.synchronizeFields(evt.target, noticeCapacityElement, noticeRoomNumberToCapacity, syncValueAndValueList);
   };
 
-  // обработка события не валидности элемента формы Notice
+  // обработка события невалидности элемента формы Notice
   var onNoticeElementInvalid = function (evt) {
     if (!evt.target.validity.valid) {
       evt.target.classList.add('invalid');
     }
   };
 
+  var hideMessage = function () {
+    if (messageElement && !messageElement.classList.contains('hidden')) {
+      messageElement.classList.add('hidden');
+    }
+  };
+
   // обработка события change элемента формы Notice
-  // при валидности элемента сбрасывать соответствующий класс
   var onNoticeElementChange = function (evt) {
     if (!evt.target.validity.valid) {
       evt.target.classList.add('invalid');
@@ -97,7 +105,26 @@
     }
   };
 
-  var onNoticeFormShow = function () {
+  var onSuccessSubmit = function () {
+    noticeFormElement.reset();
+    window.movePin.setDefaultPositionMainPin();
+    synchronizeNoticeForm();
+    messageElement = window.message.showNotice('Данные успешно отправлены', noticeElement, window.util.verticalAlignMessage.bottom);
+    setTimeout(hideMessage, 3000);
+  };
+
+  var onErrorSubmit = function (errorMessage) {
+    messageElement = window.message.showError(errorMessage, noticeElement, window.util.verticalAlignMessage.bottom);
+    setTimeout(hideMessage, 3000);
+  };
+
+  var onNoticeFormSubmit = function (evt) {
+    hideMessage();
+    window.backend.save(new FormData(noticeFormElement), onSuccessSubmit, onErrorSubmit, URL_NEW_OFFER);
+    evt.preventDefault();
+  };
+
+  var synchronizeNoticeForm = function () {
     // установить синхронизации полей формы
     window.synchronizeFields(noticeRoomNumberElement, noticeCapacityElement, noticeRoomNumberToCapacity, syncValueAndValueList);
     window.synchronizeFields(noticeTypeHouseElement, noticePriceElement, noticeTypeHouseToMinPrice, syncValueAndMinValue);
@@ -114,13 +141,13 @@
     noticeRoomNumberElement.addEventListener('change', onNoticeRoomNumberChange);
     noticeFormElement.addEventListener('invalid', onNoticeElementInvalid, true);
     noticeFormElement.addEventListener('change', onNoticeElementChange);
+    noticeFormElement.addEventListener('submit', onNoticeFormSubmit);
   };
 
   var onNoticeFormLoad = function () {
     addNoticeFormHandlers();
+    synchronizeNoticeForm();
   };
-
-  window.addEventListener('pageshow', onNoticeFormShow);
 
   window.addEventListener('load', onNoticeFormLoad);
 

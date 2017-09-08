@@ -13,18 +13,14 @@
   var locationToIndex = {};
   var activePin = null;
 
-  var getParentPinHeight = function (pin) {
-    return pin.closest('.tokyo').clientHeight;
-  };
-
   var setPinToIndex = function (location, index) {
     var locationString = location.x + ' ' + location.y;
     locationToIndex[locationString] = index;
   };
 
-  var renderPin = function (offerItem, parentHeight) {
+  var renderPin = function (offerItem) {
     var element = document.createElement(PIN_TEG);
-    var positionPin = window.pin.calcPinMapPosition(offerItem.location, PIN_WIDTH, PIN_HEIGHT, parentHeight);
+    var positionPin = window.pin.calcPinMapPosition(offerItem.location, PIN_WIDTH, PIN_HEIGHT);
     element.className = PIN_CLASS;
     element.style.left = positionPin.x + 'px';
     element.style.top = positionPin.y + 'px';
@@ -36,22 +32,22 @@
 
   window.pin = {
     // вычислить позицию метки на карте с учетом размера метки по заданному адресу
-    calcPinMapPosition: function (location, pinWidth, pinHeight, parentHeight) {
+    calcPinMapPosition: function (location, pinWidth, pinHeight) {
       var offsetX = Math.floor(pinWidth / 2);
       var offsetY = pinHeight;
       var position = {};
       position.x = location.x - offsetX;
-      position.y = parentHeight - (location.y + offsetY);
+      position.y = location.y - offsetY;
       return position;
     },
 
     // вычислить координаты адреса, на который указывает метка (с учетом ее размера)
-    calcPinLocation: function (position, pinWidth, pinHeight, parentHeight) {
+    calcPinLocation: function (position, pinWidth, pinHeight) {
       var offsetX = Math.floor(pinWidth / 2);
       var offsetY = pinHeight;
       var location = {};
       location.x = position.x + offsetX;
-      location.y = parentHeight - (position.y + offsetY);
+      location.y = position.y + offsetY;
       return location;
     },
 
@@ -61,14 +57,14 @@
       var positionPin = {};
       positionPin.x = pin.offsetLeft;
       positionPin.y = pin.offsetTop;
-      var locationPin = this.calcPinLocation(positionPin, pin.clientWidth, pin.clientHeight, getParentPinHeight(pin));
+      var locationPin = this.calcPinLocation(positionPin, pin.clientWidth, pin.clientHeight);
       return locationToIndex[locationPin.x + ' ' + locationPin.y];
     },
 
-    renderPinList: function (offers, parentHeight) {
+    renderPinList: function (offers) {
       var fragment = document.createDocumentFragment();
       for (var i = 0; i < offers.length; i++) {
-        fragment.appendChild(renderPin(offers[i], parentHeight));
+        fragment.appendChild(renderPin(offers[i]));
         setPinToIndex(offers[i].location, i);
       }
       return fragment;

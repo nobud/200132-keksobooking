@@ -1,6 +1,7 @@
 'use strict';
 
 (function () {
+  var URL_DATA_OFFERS = 'https://1510.dump.academy/keksobooking/data';
   var mapElement = document.querySelector('.tokyo__pin-map');
   var mapHeight = mapElement.parentElement.clientHeight;
   var mapWidth = mapElement.parentElement.clientWidth;
@@ -33,11 +34,20 @@
     }
   };
 
+  var renderPinsOnMap = function (data) {
+    dataOffers = data;
+    // отрисовать метки
+    mapElement.appendChild(window.pin.renderPinList(dataOffers));
+  };
+
+  var onErrorRenderPins = function (errorMessage) {
+    window.message.showError(errorMessage, mapElement, window.util.verticalAlignMessage.top);
+  };
+
   var onMapLoad = function () {
     // получить данные с объявлениями
-    dataOffers = window.data.getValues();
-    // отрисовать метки
-    mapElement.appendChild(window.pin.renderPinList(dataOffers, mapHeight));
+    window.backend.load(renderPinsOnMap, onErrorRenderPins, URL_DATA_OFFERS);
+
     // добавить обработчики событий для меток на карте
     mapElement.addEventListener('click', onPinClick);
     mapElement.addEventListener('keydown', onPinEnterPress);

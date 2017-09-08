@@ -2,25 +2,24 @@
 
 (function () {
   var pinMain = document.querySelector('.pin__main');
+  var pinMainInitPosition = {};
+  pinMainInitPosition.x = pinMain.offsetLeft;
+  pinMainInitPosition.y = pinMain.offsetTop;
   pinMain.style.zIndex = '100';
   var mapWidth = window.map.getMapWidth();
   var mapHeight = window.map.getMapHeight();
   // возможные границы адреса
-  var rangeLocation = {
-    minX: 0,
-    minY: 50,
-    maxX: mapWidth,
-    maxY: mapHeight - 200
+  var minLocation = {
+    x: 0,
+    y: 200
+  };
+  var maxLocation = {
+    x: mapWidth,
+    y: mapHeight - 50
   };
   // вычислить возможные границы перемещения метки
-  var minLocation = {};
-  minLocation.x = rangeLocation.minX;
-  minLocation.y = rangeLocation.maxY;
-  var minPosition = window.pin.calcPinMapPosition(minLocation, pinMain.clientWidth, pinMain.clientHeight, mapHeight);
-  var maxLocation = {};
-  maxLocation.x = rangeLocation.maxX;
-  maxLocation.y = rangeLocation.minY;
-  var maxPosition = window.pin.calcPinMapPosition(maxLocation, pinMain.clientWidth, pinMain.clientHeight, mapHeight);
+  var minPosition = window.pin.calcPinMapPosition(minLocation, pinMain.clientWidth, pinMain.clientHeight);
+  var maxPosition = window.pin.calcPinMapPosition(maxLocation, pinMain.clientWidth, pinMain.clientHeight);
 
   // начальные координаты метки
   var startCoords = {
@@ -74,7 +73,7 @@
     movingElement.style.top = newPosition.y + 'px';
     movingElement.style.left = newPosition.x + 'px';
     // отобразить адрес, на который указывает метка
-    window.form.setNewAddress(window.pin.calcPinLocation(newPosition, movingElement.clientWidth, movingElement.clientHeight, mapHeight));
+    window.form.setNewAddress(window.pin.calcPinLocation(newPosition, movingElement.clientWidth, movingElement.clientHeight));
   };
 
   var onMouseUp = function (evt) {
@@ -89,7 +88,12 @@
       var position = {};
       position.x = pinMain.offsetLeft;
       position.y = pinMain.offsetTop;
-      return window.pin.calcPinLocation(position, pinMain.clientWidth, pinMain.clientHeight, mapHeight);
+      return window.pin.calcPinLocation(position, pinMain.clientWidth, pinMain.clientHeight);
+    },
+
+    setDefaultPositionMainPin: function () {
+      pinMain.style.left = pinMainInitPosition.x + 'px';
+      pinMain.style.top = pinMainInitPosition.y + 'px';
     }
   };
 })();
