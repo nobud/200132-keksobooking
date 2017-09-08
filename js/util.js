@@ -7,6 +7,11 @@
   };
 
   window.util = {
+    verticalAlignMessage: {
+      top: 0,
+      bottom: 1
+    },
+
     isEnterPressed: function (evt) {
       return evt.keyCode === keyCode.ENTER;
     },
