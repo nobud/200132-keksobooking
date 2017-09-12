@@ -10,6 +10,11 @@
   // массив координат объявлений на карте (location)
   var offerLocations = [];
 
+  var deletePinEvent = new CustomEvent('deleteActivePin', {
+    bubbles: true,
+    cancellable: false
+  });
+
   var getLocationStr = function (location) {
     return location.x + ' ' + location.y;
   };
@@ -77,8 +82,12 @@
       return !pin.classList.contains('pin__main');
     });
     Array.from(pinsOffer).forEach(function (pin) {
+      if (pin === window.pin.getActivePin()) {
+        window.dispatchEvent(deletePinEvent);
+      }
       mapElement.removeChild(pin);
     });
+
   };
 
   var onUpdateFilter = function (evt) {

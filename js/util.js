@@ -8,11 +8,11 @@
 
   window.util = {
     checkMin: function (value, min) {
-      return value >= min;
+      return value > min;
     },
 
     checkMax: function (value, max) {
-      return value <= max;
+      return value < max;
     },
 
     checkRange: function (value, min, max) {

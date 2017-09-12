@@ -45,6 +45,10 @@
     }
   };
 
+  window.addEventListener('deleteActivePin', function () {
+    closeActiveOffer();
+  });
+
   // открыть окно с активным объявлением
   window.showCard = function (offer) {
     // отобразить данные объявления, соответствующие активной метке

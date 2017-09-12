@@ -2,22 +2,29 @@
 
 (function () {
   var NO_FILTER = 'any';
+  var FILTER_HOUSE_TYPE = 'type';
+  var FILTER_PRICE = 'price';
+  var FILTER_ROOMS_NUMBER = 'roomsNumber';
+  var FILTER_GUESTS_NUMBER = 'guestsNumber';
+  var FILTER_FEATURES = 'feature';
+
   var priceRange = {
     low: {
       min: NO_FILTER,
-      max: 9999
+      max: 10000
     },
     middle: {
       min: 10000,
       max: 50000
     },
     high: {
-      min: 50001,
+      min: 50000,
       max: NO_FILTER
     },
     any: NO_FILTER
   };
 
+  var filterSet = {};
   var tokyoFiltersFormElement = document.querySelector('.tokyo__filters');
   var housingTypeElement = tokyoFiltersFormElement.querySelector('#housing_type');
   var housingRoomNumberElement = tokyoFiltersFormElement.querySelector('#housing_room-number');
@@ -25,12 +32,6 @@
   var housingPriceElement = tokyoFiltersFormElement.querySelector('#housing_price');
   var tokyoFiltersetElement = tokyoFiltersFormElement.querySelector('#housing_features');
   var featuresListElement = tokyoFiltersetElement.elements;
-
-  var typeHouse;
-  var roomsNumber;
-  var guestsNumber;
-  var rangePrice;
-  var features = [];
 
   var getFeaturesForFilter = function () {
     return Array.from(featuresListElement).filter(function (feature) {
@@ -64,11 +65,11 @@
 
   var getFilteredOffers = function (offers) {
     return offers.filter(function (item) {
-      return comparePrice(item.offer.price, rangePrice) &&
-      compareValue(String(item.offer.type), typeHouse) &&
-      compareValue(String(item.offer.rooms), roomsNumber) &&
-      compareValue(String(item.offer.guests), guestsNumber) &&
-      window.util.includeList(item.offer.features, features);
+      return comparePrice(item.offer.price, filterSet[FILTER_PRICE]) &&
+      compareValue(String(item.offer.type), filterSet[FILTER_HOUSE_TYPE]) &&
+      compareValue(String(item.offer.rooms), filterSet[FILTER_ROOMS_NUMBER]) &&
+      compareValue(String(item.offer.guests), filterSet[FILTER_GUESTS_NUMBER]) &&
+      window.util.includeList(item.offer.features, filterSet[FILTER_FEATURES]);
     });
   };
 
@@ -83,46 +84,39 @@
     window.dispatchEvent(filterEvent);
   };
 
-  var onHousingTypeElementChange = function () {
-    typeHouse = housingTypeElement.value;
+  var updateAndRunFilter = function (filter, value) {
+    filterSet[filter] = value;
     window.debounce(updatePins);
   };
 
-  var onHousingRoomNumberElementChange = function () {
-    roomsNumber = housingRoomNumberElement.value;
-    window.debounce(updatePins);
-  };
-
-  var onHousingGuestsNumberElementChange = function () {
-    guestsNumber = housingGuestsNumberElement.value;
-    window.debounce(updatePins);
-  };
-
-  var onHousingPriceElementChange = function () {
-    rangePrice = getPriceRangeForFilter(housingPriceElement.value);
-    window.debounce(updatePins);
-  };
-
-  var onTokyoFiltersetElementChange = function () {
-    features = getFeaturesForFilter();
-    window.debounce(updatePins);
+  var onFilterElementChange = function (evt) {
+    var filter = String(evt.target.dataset.filter);
+    switch (filter) {
+      case FILTER_HOUSE_TYPE:
+      case FILTER_GUESTS_NUMBER:
+      case FILTER_ROOMS_NUMBER:
+        updateAndRunFilter(filter, evt.target.value);
+        break;
+      case FILTER_PRICE:
+        updateAndRunFilter(filter, getPriceRangeForFilter(evt.target.value));
+        break;
+      case FILTER_FEATURES:
+        updateAndRunFilter(filter, getFeaturesForFilter());
+        break;
+    }
   };
 
   var onTokyoFiltersFormElementLoad = function () {
     initFilters();
-    housingTypeElement.addEventListener('change', onHousingTypeElementChange);
-    housingRoomNumberElement.addEventListener('change', onHousingRoomNumberElementChange);
-    housingGuestsNumberElement.addEventListener('change', onHousingGuestsNumberElementChange);
-    housingPriceElement.addEventListener('change', onHousingPriceElementChange);
-    tokyoFiltersetElement.addEventListener('change', onTokyoFiltersetElementChange);
+    tokyoFiltersFormElement.addEventListener('change', onFilterElementChange);
   };
 
   var initFilters = function () {
-    typeHouse = housingTypeElement.value;
-    roomsNumber = housingRoomNumberElement.value;
-    guestsNumber = housingGuestsNumberElement.value;
-    rangePrice = getPriceRangeForFilter(housingPriceElement.value);
-    features = getFeaturesForFilter();
+    filterSet[FILTER_HOUSE_TYPE] = housingTypeElement.value;
+    filterSet[FILTER_PRICE] = getPriceRangeForFilter(housingPriceElement.value);
+    filterSet[FILTER_ROOMS_NUMBER] = housingRoomNumberElement.value;
+    filterSet[FILTER_GUESTS_NUMBER] = housingGuestsNumberElement.value;
+    filterSet[FILTER_FEATURES] = getFeaturesForFilter();
   };
 
   window.addEventListener('load', onTokyoFiltersFormElementLoad);
