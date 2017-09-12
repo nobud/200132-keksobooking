@@ -5,14 +5,36 @@
   var mapElement = document.querySelector('.tokyo__pin-map');
   var mapHeight = mapElement.parentElement.clientHeight;
   var mapWidth = mapElement.parentElement.clientWidth;
-  // данные объявлений
+  // массив объявлений
   var dataOffers = [];
+  // массив координат объявлений на карте (location)
+  var offerLocations = [];
+
+  var getLocationStr = function (location) {
+    return location.x + ' ' + location.y;
+  };
+
+  // получить индекс объявления, которое соответствует заданной pin (метке)
+  var getPinIndex = function (pin) {
+    // получить адрес на карте (location), которому соответствует метка
+    var positionPin = {};
+    positionPin.x = pin.offsetLeft;
+    positionPin.y = pin.offsetTop;
+    var locationPin = window.pin.calcPinLocation(positionPin, pin.clientWidth, pin.clientHeight);
+    return offerLocations.indexOf(getLocationStr(locationPin));
+  };
 
   var changePin = function (pin) {
     // установить новую активную метку
     window.pin.changeActivePin(pin);
     // показать карточку с объявлением, соответствующим метке
-    window.showCard(dataOffers[window.pin.getPinIndex(pin)]);
+    window.showCard(dataOffers[getPinIndex(pin)]);
+  };
+
+  var setOfferLocations = function () {
+    offerLocations = dataOffers.map(function (offerItem) {
+      return getLocationStr(offerItem.location);
+    });
   };
 
   // обработчик клика по метке
@@ -34,23 +56,49 @@
     }
   };
 
-  var renderPinsOnMap = function (data) {
+  // сохранить данные объявлений
+  var saveDataOffers = function (data) {
     dataOffers = data;
-    // отрисовать метки
-    mapElement.appendChild(window.pin.renderPinList(dataOffers));
+    setOfferLocations();
+  };
+
+  // отрисовать метки на карте
+  var renderPinsOnMap = function (someOffers) {
+    mapElement.appendChild(window.pin.renderPinList(someOffers));
   };
 
   var onErrorRenderPins = function (errorMessage) {
-    window.message.showError(errorMessage, mapElement, window.util.verticalAlignMessage.top);
+    window.message.showError(errorMessage, mapElement, window.message.verticalAlignMessage.top);
+  };
+
+  var deleteCurrentPins = function () {
+    var allPins = mapElement.querySelectorAll('.pin');
+    var pinsOffer = Array.from(allPins).filter(function (pin) {
+      return !pin.classList.contains('pin__main');
+    });
+    Array.from(pinsOffer).forEach(function (pin) {
+      mapElement.removeChild(pin);
+    });
+  };
+
+  var onUpdateFilter = function (evt) {
+    deleteCurrentPins();
+    renderPinsOnMap(evt.detail.data);
+  };
+
+  var onSuccessDataLoad = function (data) {
+    renderPinsOnMap(data);
+    saveDataOffers(data);
   };
 
   var onMapLoad = function () {
-    // получить данные с объявлениями
-    window.backend.load(renderPinsOnMap, onErrorRenderPins, URL_DATA_OFFERS);
-
-    // добавить обработчики событий для меток на карте
+    // получить данные с объявлениями и сохранить их
+    window.backend.load(onSuccessDataLoad, onErrorRenderPins, URL_DATA_OFFERS);
+    // обработчики событий для меток на карте
     mapElement.addEventListener('click', onPinClick);
     mapElement.addEventListener('keydown', onPinEnterPress);
+    // обработчик обновления фильтра
+    window.addEventListener('updateFilter', onUpdateFilter);
   };
 
   window.addEventListener('load', onMapLoad);
@@ -61,6 +109,9 @@
     },
     getMapHeight: function () {
       return mapHeight;
+    },
+    getDataOffers: function () {
+      return dataOffers;
     }
   };
 })();

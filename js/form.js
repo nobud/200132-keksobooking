@@ -109,12 +109,12 @@
     noticeFormElement.reset();
     window.movePin.setDefaultPositionMainPin();
     synchronizeNoticeForm();
-    messageElement = window.message.showNotice('Данные успешно отправлены', noticeElement, window.util.verticalAlignMessage.bottom);
+    messageElement = window.message.showNotice('Данные успешно отправлены', noticeElement, window.message.verticalAlignMessage.bottom);
     setTimeout(hideMessage, 3000);
   };
 
   var onErrorSubmit = function (errorMessage) {
-    messageElement = window.message.showError(errorMessage, noticeElement, window.util.verticalAlignMessage.bottom);
+    messageElement = window.message.showError(errorMessage, noticeElement, window.message.verticalAlignMessage.bottom);
     setTimeout(hideMessage, 3000);
   };
 
