@@ -9,14 +9,7 @@
   var PIN_WIDTH = 56;
   var PIN_HEIGHT = 75;
 
-  // соответствие адреса метки индексу объявления в массиве
-  var locationToIndex = {};
   var activePin = null;
-
-  var setPinToIndex = function (location, index) {
-    var locationString = location.x + ' ' + location.y;
-    locationToIndex[locationString] = index;
-  };
 
   var renderPin = function (offerItem) {
     var element = document.createElement(PIN_TEG);
@@ -51,21 +44,10 @@
       return location;
     },
 
-    // получить индекс объявления, которое соответствует заданной pin (метке)
-    getPinIndex: function (pin) {
-      // получить адрес (location), которому соответствует метка
-      var positionPin = {};
-      positionPin.x = pin.offsetLeft;
-      positionPin.y = pin.offsetTop;
-      var locationPin = this.calcPinLocation(positionPin, pin.clientWidth, pin.clientHeight);
-      return locationToIndex[locationPin.x + ' ' + locationPin.y];
-    },
-
     renderPinList: function (offers) {
       var fragment = document.createDocumentFragment();
       for (var i = 0; i < offers.length; i++) {
         fragment.appendChild(renderPin(offers[i]));
-        setPinToIndex(offers[i].location, i);
       }
       return fragment;
     },

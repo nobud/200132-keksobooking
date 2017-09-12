@@ -4,7 +4,7 @@
   var xhrLoad = function (onLoad, onError) {
     var xhr = new XMLHttpRequest();
     xhr.responseType = 'json';
-    xhr.timeout = 2000;
+    xhr.timeout = 4000;
     xhr.addEventListener('load', function () {
       switch (xhr.status) {
         case 200:

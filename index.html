@@ -16,52 +16,52 @@
     <img src="img/main.jpg" alt="Tokyo" width="1200" height="700">
     <div class="tokyo__filters-container">
       <form action="#" class="tokyo__filters" autocomplete="off">
-        <label><select name="housing_type" id="housing_type" class="tokyo__filter">
+        <label><select name="housing_type" id="housing_type" class="tokyo__filter" data-filter="type">
           <option value="any" selected>Любой тип жилья</option>
           <option value="flat">Квартира</option>
           <option value="house">Дом</option>
           <option value="bungalo">Сарай</option>
         </select></label>
-        <label><select name="housing_price" id="housing_price" class="tokyo__filter">
+        <label><select name="housing_price" id="housing_price" class="tokyo__filter" data-filter="price">
           <option value="any" selected>Любая</option>
           <option value="middle" selected>10000 - 50000&#x20bd;</option>
           <option value="low">до 10000&#x20bd;</option>
           <option value="high">от 50000&#x20bd;</option>
         </select></label>
-        <label><select name="housing_room-number" id="housing_room-number" class="tokyo__filter">
+        <label><select name="housing_room-number" id="housing_room-number" class="tokyo__filter" data-filter="roomsNumber">
           <option value="any" selected>Любое число комнат</option>
           <option value="1">Одна комната</option>
           <option value="2">Две комнаты</option>
           <option value="3">Три комнаты</option>
         </select></label>
-        <label><select name="housing_guests-number" id="housing_guests-number" class="tokyo__filter">
+        <label><select name="housing_guests-number" id="housing_guests-number" class="tokyo__filter" data-filter="guestsNumber">
           <option value="any" selected>Любое число гостей</option>
           <option value="1">Один гость</option>
           <option value="2">Два гостя</option>
         </select></label>
         <fieldset id="housing_features" class="tokyo__filter-set">
           <label class="feature">
-            <input type="checkbox" name="feature" value="wifi"><span
+            <input type="checkbox" name="feature" value="wifi" data-filter="feature"><span
             class="feature__image  feature__image--wifi"></span>
           </label>
           <label class="feature">
-            <input type="checkbox" name="feature" value="dishwasher"><span
+            <input type="checkbox" name="feature" value="dishwasher" data-filter="feature"><span
             class="feature__image  feature__image--dishwasher"></span>
           </label>
           <label class="feature">
-            <input type="checkbox" name="feature" value="parking"><span
+            <input type="checkbox" name="feature" value="parking" data-filter="feature"><span
             class="feature__image  feature__image--parking"></span>
           </label>
           <label class="feature">
-            <input type="checkbox" name="feature" value="washer"><span
+            <input type="checkbox" name="feature" value="washer" data-filter="feature"><span
             class="feature__image  feature__image--washer"></span>
           </label>
           <label class="feature">
-            <input type="checkbox" name="feature" value="elevator"><span
+            <input type="checkbox" name="feature" value="elevator" data-filter="feature"><span
             class="feature__image  feature__image--elevator"></span>
           </label>
           <label class="feature">
-            <input type="checkbox" name="feature" value="conditioner"><span
+            <input type="checkbox" name="feature" value="conditioner" data-filter="feature"><span
             class="feature__image  feature__image--conditioner"></span>
           </label>
         </fieldset>
@@ -279,6 +279,7 @@
   </div>
 </template>
 <script src="./js/util.js"></script>
+<script src="./js/debounce.js"></script>
 <script src="./js/message.js"></script>
 <script src="./js/backend.js"></script>
 <script src="./js/pin.js"></script>
@@ -288,5 +289,6 @@
 <script src="./js/move-pin.js"></script>
 <script src="./js/synchronize-fields.js"></script>
 <script src="./js/form.js"></script>
+<script src="./js/filter.js"></script>
 </body>
 </html>

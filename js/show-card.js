@@ -6,7 +6,7 @@
 
   // изменить активное объявление
   var changeActiveOffer = function (offer) {
-    // узнать индекс объявления и отобразить данные выбранного объявления в диалоговом окне
+    // отобразить данные выбранного объявления в диалоговом окне
     window.card.renderOffer(offer, dialogElement);
   };
 
@@ -45,10 +45,14 @@
     }
   };
 
+  window.addEventListener('deleteActivePin', function () {
+    closeActiveOffer();
+  });
+
   // открыть окно с активным объявлением
-  window.showCard = function (newPin) {
+  window.showCard = function (offer) {
     // отобразить данные объявления, соответствующие активной метке
-    changeActiveOffer(newPin);
+    changeActiveOffer(offer);
     // добавить обработчики
     dialogCloseElement.addEventListener('click', onDialogCloseClick);
     dialogCloseElement.addEventListener('keydown', onDialogCloseEnterPress);

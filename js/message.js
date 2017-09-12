@@ -22,10 +22,10 @@
     element.style.padding = '10px';
     element.style.position = 'absolute';
     switch (alignMessage) {
-      case window.util.verticalAlignMessage.top:
+      case window.message.verticalAlignMessage.top:
         alignTop(element);
         break;
-      case window.util.verticalAlignMessage.bottom:
+      case window.message.verticalAlignMessage.bottom:
         alignBottom(element);
         break;
     }
@@ -50,6 +50,11 @@
   };
 
   window.message = {
+    verticalAlignMessage: {
+      top: 0,
+      bottom: 1
+    },
+
     showError: function (errorMessage, parentElement, alignMessage) {
       return showMessage(errorMessage, actionStatus.error, parentElement, alignMessage);
     },
