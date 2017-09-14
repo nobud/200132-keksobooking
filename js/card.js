@@ -21,9 +21,9 @@
 
   var renderFeatureList = function (features) {
     var fragment = document.createDocumentFragment();
-    for (var i = 0; i < features.length; i++) {
-      fragment.appendChild(renderFeature(features[i]));
-    }
+    features.forEach(function (feature) {
+      fragment.appendChild(renderFeature(feature));
+    });
     return fragment;
   };
 

@@ -7,30 +7,29 @@
   };
 
   window.util = {
-    checkMin: function (value, min) {
-      return value > min;
-    },
-
-    checkMax: function (value, max) {
-      return value < max;
-    },
-
-    checkRange: function (value, min, max) {
-      return value >= min && value <= max;
-    },
-
-    includeList: function (list, filterList) {
-      return filterList.every(function (filter) {
-        return list.indexOf(filter) >= 0;
-      });
-    },
-
     isEnterPressed: function (evt) {
       return evt.keyCode === keyCode.ENTER;
     },
 
     isEscPressed: function (evt) {
       return evt.keyCode === keyCode.ESC;
+    },
+
+    // генерирование случайного значения в диапазоне [min; max]
+    getRandomValue: function (min, max) {
+      return Math.floor(Math.random() * (max - min + 1)) + min;
+    },
+
+    getRandomUniqValues: function (min, max, count) {
+      var uniqRandomValues = [];
+      var value;
+      while (uniqRandomValues.length < count) {
+        value = this.getRandomValue(min, max);
+        if (!uniqRandomValues.includes(value)) {
+          uniqRandomValues.push(value);
+        }
+      }
+      return uniqRandomValues;
     }
   };
 })();

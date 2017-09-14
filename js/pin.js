@@ -24,13 +24,14 @@
   };
 
   window.pin = {
-    // вычислить позицию метки на карте с учетом размера метки по заданному адресу
+    // вычислить позицию метки на карте по заданному адресу на карте с учетом размера метки
     calcPinMapPosition: function (location, pinWidth, pinHeight) {
       var offsetX = Math.floor(pinWidth / 2);
       var offsetY = pinHeight;
-      var position = {};
-      position.x = location.x - offsetX;
-      position.y = location.y - offsetY;
+      var position = {
+        x: location.x - offsetX,
+        y: location.y - offsetY
+      };
       return position;
     },
 
@@ -38,17 +39,18 @@
     calcPinLocation: function (position, pinWidth, pinHeight) {
       var offsetX = Math.floor(pinWidth / 2);
       var offsetY = pinHeight;
-      var location = {};
-      location.x = position.x + offsetX;
-      location.y = position.y + offsetY;
+      var location = {
+        x: position.x + offsetX,
+        y: position.y + offsetY
+      };
       return location;
     },
 
     renderPinList: function (offers) {
       var fragment = document.createDocumentFragment();
-      for (var i = 0; i < offers.length; i++) {
-        fragment.appendChild(renderPin(offers[i]));
-      }
+      offers.forEach(function (offer) {
+        fragment.appendChild(renderPin(offer));
+      });
       return fragment;
     },
 

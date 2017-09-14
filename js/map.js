@@ -1,6 +1,8 @@
 'use strict';
 
 (function () {
+  // количество произвольных вариантов, которые показываются по умолчанию при открытии страницы
+  var DEFAULT_COUNT_PINS = 3;
   var URL_DATA_OFFERS = 'https://1510.dump.academy/keksobooking/data';
   var mapElement = document.querySelector('.tokyo__pin-map');
   var mapHeight = mapElement.parentElement.clientHeight;
@@ -22,10 +24,7 @@
   // получить индекс объявления, которое соответствует заданной pin (метке)
   var getPinIndex = function (pin) {
     // получить адрес на карте (location), которому соответствует метка
-    var positionPin = {};
-    positionPin.x = pin.offsetLeft;
-    positionPin.y = pin.offsetTop;
-    var locationPin = window.pin.calcPinLocation(positionPin, pin.clientWidth, pin.clientHeight);
+    var locationPin = window.pin.calcPinLocation({x: pin.offsetLeft, y: pin.offsetTop}, pin.clientWidth, pin.clientHeight);
     return offerLocations.indexOf(getLocationStr(locationPin));
   };
 
@@ -72,22 +71,19 @@
     mapElement.appendChild(window.pin.renderPinList(someOffers));
   };
 
-  var onErrorRenderPins = function (errorMessage) {
-    window.message.showError(errorMessage, mapElement, window.message.verticalAlignMessage.top);
-  };
-
   var deleteCurrentPins = function () {
     var allPins = mapElement.querySelectorAll('.pin');
-    var pinsOffer = Array.from(allPins).filter(function (pin) {
-      return !pin.classList.contains('pin__main');
-    });
-    Array.from(pinsOffer).forEach(function (pin) {
-      if (pin === window.pin.getActivePin()) {
-        window.dispatchEvent(deletePinEvent);
-      }
-      mapElement.removeChild(pin);
-    });
+    var activePin = window.pin.getActivePin();
+    var mainPin = mapElement.querySelector('.pin__main');
 
+    Array.prototype.forEach.call(allPins, function (pin) {
+      if (pin !== mainPin) {
+        if (pin === activePin) {
+          window.dispatchEvent(deletePinEvent);
+        }
+        mapElement.removeChild(pin);
+      }
+    });
   };
 
   var onUpdateFilter = function (evt) {
@@ -95,14 +91,29 @@
     renderPinsOnMap(evt.detail.data);
   };
 
+  // получить список нескольких случайно выбранных объектов
+  var getDefaultObjects = function () {
+    var indexList = window.util.getRandomUniqValues(0, dataOffers.length - 1, DEFAULT_COUNT_PINS);
+    var defaultOffers = [];
+    indexList.forEach(function (it) {
+      defaultOffers.push(dataOffers[it]);
+    });
+    return defaultOffers;
+  };
+
   var onSuccessDataLoad = function (data) {
-    renderPinsOnMap(data);
+    // сохранить полный список объектов
     saveDataOffers(data);
+    renderPinsOnMap(getDefaultObjects());
+  };
+
+  var onErrorDataLoad = function (errorMessage) {
+    window.message.showError(errorMessage, mapElement, window.message.verticalAlignMessage.top);
   };
 
   var onMapLoad = function () {
     // получить данные с объявлениями и сохранить их
-    window.backend.load(onSuccessDataLoad, onErrorRenderPins, URL_DATA_OFFERS);
+    window.backend.load(onSuccessDataLoad, onErrorDataLoad, URL_DATA_OFFERS);
     // обработчики событий для меток на карте
     mapElement.addEventListener('click', onPinClick);
     mapElement.addEventListener('keydown', onPinEnterPress);

@@ -1,19 +1,24 @@
 'use strict';
 
 (function () {
+  var STATUS_OK = 200;
+  var STATUS_NOCORRECT = 400;
+  var STATUS_NOT_FOUND = 404;
+  var XHR_TIMEOUT = 4000; // мс
+
   var xhrLoad = function (onLoad, onError) {
     var xhr = new XMLHttpRequest();
     xhr.responseType = 'json';
-    xhr.timeout = 4000;
+    xhr.timeout = XHR_TIMEOUT;
     xhr.addEventListener('load', function () {
       switch (xhr.status) {
-        case 200:
+        case STATUS_OK:
           onLoad(xhr.response);
           break;
-        case 400:
+        case STATUS_NOCORRECT:
           onError('Неверный запрос');
           break;
-        case 404:
+        case STATUS_NOT_FOUND:
           onError('Ничего не найдено');
           break;
         default:
@@ -26,7 +31,7 @@
     });
 
     xhr.addEventListener('timeout', function () {
-      onError('Превышение времени ожидания: ' + Math.floor(xhr.timeout / 1000) + 'с');
+      onError('Превышение времени ожидания: ' + xhr.timeout + 'мс');
     });
 
     return xhr;

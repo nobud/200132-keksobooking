@@ -2,9 +2,10 @@
 
 (function () {
   var pinMain = document.querySelector('.pin__main');
-  var pinMainInitPosition = {};
-  pinMainInitPosition.x = pinMain.offsetLeft;
-  pinMainInitPosition.y = pinMain.offsetTop;
+  var pinMainInitPosition = {
+    x: pinMain.offsetLeft,
+    y: pinMain.offsetTop
+  };
   pinMain.style.zIndex = '100';
   var mapWidth = window.map.getMapWidth();
   var mapHeight = window.map.getMapHeight();
@@ -41,6 +42,15 @@
 
   pinMain.addEventListener('mousedown', onMouseDown);
 
+  var setLimitValue = function (value, min, max) {
+    if (value < min) {
+      value = min;
+    } else if (value > max) {
+      value = max;
+    }
+    return value;
+  };
+
   var onMouseMove = function (evt) {
     evt.preventDefault();
     // вычислить смещение от начальных координат
@@ -48,26 +58,19 @@
       x: startCoords.x - evt.clientX,
       y: startCoords.y - evt.clientY
     };
-    // запомнить начальные координаты
+    // запомнить новые начальные координаты
     startCoords = {
       x: evt.clientX,
       y: evt.clientY
     };
-    // новые координаты метки
-    var newPosition = {};
-    newPosition.x = movingElement.offsetLeft - shift.x;
-    newPosition.y = movingElement.offsetTop - shift.y;
-    if (newPosition.x < minPosition.x) {
-      newPosition.x = minPosition.x;
-    } else if (newPosition.x > maxPosition.x) {
-      newPosition.x = maxPosition.x;
-    }
+    // вычислить новые координаты метки
+    var newPosition = {
+      x: movingElement.offsetLeft - shift.x,
+      y: movingElement.offsetTop - shift.y
+    };
 
-    if (newPosition.y < minPosition.y) {
-      newPosition.y = minPosition.y;
-    } else if (newPosition.y > maxPosition.y) {
-      newPosition.y = maxPosition.y;
-    }
+    newPosition.x = setLimitValue(newPosition.x, minPosition.x, maxPosition.x);
+    newPosition.y = setLimitValue(newPosition.y, minPosition.y, maxPosition.y);
 
     // отобразить метку по новым координатам
     movingElement.style.top = newPosition.y + 'px';
@@ -85,10 +88,7 @@
 
   window.movePin = {
     getPinMainLocation: function () {
-      var position = {};
-      position.x = pinMain.offsetLeft;
-      position.y = pinMain.offsetTop;
-      return window.pin.calcPinLocation(position, pinMain.clientWidth, pinMain.clientHeight);
+      return window.pin.calcPinLocation({x: pinMain.offsetLeft, y: pinMain.offsetTop}, pinMain.clientWidth, pinMain.clientHeight);
     },
 
     setDefaultPositionMainPin: function () {

@@ -33,10 +33,45 @@
   var tokyoFiltersetElement = tokyoFiltersFormElement.querySelector('#housing_features');
   var featuresListElement = tokyoFiltersetElement.elements;
 
+  var isGreaterThan = function (value, min) {
+    return value > min;
+  };
+
+  var isLessThan = function (value, max) {
+    return value < max;
+  };
+
+  var isInRange = function (value, min, max) {
+    return value >= min && value <= max;
+  };
+
+  var checkRange = function (value, filterValue) {
+    if (filterValue === NO_FILTER) {
+      return true;
+    }
+    if (filterValue.min === NO_FILTER) {
+      return isLessThan(value, filterValue.max);
+    }
+    if (filterValue.max === NO_FILTER) {
+      return isGreaterThan(value, filterValue.min);
+    }
+    return isInRange(value, filterValue.min, filterValue.max);
+  };
+
+  var checkValue = function (value, filterValue) {
+    return filterValue === NO_FILTER ? true : value === filterValue;
+  };
+
+  var isIncludeList = function (list, filterList) {
+    return Array.prototype.every.call(filterList, function (filter) {
+      return list.indexOf(filter) >= 0;
+    });
+  };
+
   var getFeaturesForFilter = function () {
-    return Array.from(featuresListElement).filter(function (feature) {
+    return Array.prototype.map.call(Array.prototype.filter.call(featuresListElement, function (feature) {
       return feature.checked;
-    }).map(function (featureChecked) {
+    }), function (featureChecked) {
       return featureChecked.value;
     });
   };
@@ -45,31 +80,13 @@
     return priceRange[rangeStr];
   };
 
-  var comparePrice = function (value, filterValue) {
-    if (filterValue !== NO_FILTER) {
-      if (filterValue.min === NO_FILTER) {
-        return window.util.checkMax(value, filterValue.max);
-      }
-      if (filterValue.max === NO_FILTER) {
-        return window.util.checkMin(value, filterValue.min);
-      }
-      return window.util.checkRange(value, filterValue.min, filterValue.max);
-    } else {
-      return true;
-    }
-  };
-
-  var compareValue = function (value, filterValue) {
-    return filterValue === NO_FILTER ? true : value === filterValue;
-  };
-
   var getFilteredOffers = function (offers) {
     return offers.filter(function (item) {
-      return comparePrice(item.offer.price, filterSet[FILTER_PRICE]) &&
-      compareValue(String(item.offer.type), filterSet[FILTER_HOUSE_TYPE]) &&
-      compareValue(String(item.offer.rooms), filterSet[FILTER_ROOMS_NUMBER]) &&
-      compareValue(String(item.offer.guests), filterSet[FILTER_GUESTS_NUMBER]) &&
-      window.util.includeList(item.offer.features, filterSet[FILTER_FEATURES]);
+      return checkRange(item.offer.price, filterSet[FILTER_PRICE]) &&
+      checkValue(String(item.offer.type), filterSet[FILTER_HOUSE_TYPE]) &&
+      checkValue(String(item.offer.rooms), filterSet[FILTER_ROOMS_NUMBER]) &&
+      checkValue(String(item.offer.guests), filterSet[FILTER_GUESTS_NUMBER]) &&
+      isIncludeList(item.offer.features, filterSet[FILTER_FEATURES]);
     });
   };
 

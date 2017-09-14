@@ -2,6 +2,7 @@
 'use strict';
 
 (function () {
+  var MESSAGE_DISPLAY_TIMEOUT = 3000;
   var ADDRESS_TEXT = 'x: {{x}}, y: {{y}}';
   var URL_NEW_OFFER = 'https://1510.dump.academy/keksobooking';
   var noticeElement = document.querySelector('.notice');
@@ -55,9 +56,10 @@
   };
 
   var syncValueAndValueList = function (element, values) {
-    for (var i = 0; i < element.options.length; i++) {
-      element.options[i].style.display = values.includes(element.options[i].value) ? 'block' : 'none';
-    }
+    Array.prototype.forEach.call(element.options, function (option) {
+      option.style.display = values.includes(option.value) ? 'block' : 'none';
+    });
+    // установить выбранным последнее значение из списка
     if (values.length) {
       element.value = values[values.length - 1];
     }
@@ -110,12 +112,12 @@
     window.movePin.setDefaultPositionMainPin();
     synchronizeNoticeForm();
     messageElement = window.message.showNotice('Данные успешно отправлены', noticeElement, window.message.verticalAlignMessage.bottom);
-    setTimeout(hideMessage, 3000);
+    setTimeout(hideMessage, MESSAGE_DISPLAY_TIMEOUT);
   };
 
   var onErrorSubmit = function (errorMessage) {
     messageElement = window.message.showError(errorMessage, noticeElement, window.message.verticalAlignMessage.bottom);
-    setTimeout(hideMessage, 3000);
+    setTimeout(hideMessage, MESSAGE_DISPLAY_TIMEOUT);
   };
 
   var onNoticeFormSubmit = function (evt) {
