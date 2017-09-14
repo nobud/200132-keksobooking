@@ -7,38 +7,21 @@
   var mapElement = document.querySelector('.tokyo__pin-map');
   var mapHeight = mapElement.parentElement.clientHeight;
   var mapWidth = mapElement.parentElement.clientWidth;
-  // массив объявлений
+  // массив всех объявлений
   var dataOffers = [];
-  // массив координат объявлений на карте (location)
-  var offerLocations = [];
+  // массив отрисованных объявлений (массив объявлений, для которых отрисованы метки на карте)
+  var dataRenderedOffers = [];
 
   var deletePinEvent = new CustomEvent('deleteActivePin', {
     bubbles: true,
     cancellable: false
   });
 
-  var getLocationStr = function (location) {
-    return location.x + ' ' + location.y;
-  };
-
-  // получить индекс объявления, которое соответствует заданной pin (метке)
-  var getPinIndex = function (pin) {
-    // получить адрес на карте (location), которому соответствует метка
-    var locationPin = window.pin.calcPinLocation({x: pin.offsetLeft, y: pin.offsetTop}, pin.clientWidth, pin.clientHeight);
-    return offerLocations.indexOf(getLocationStr(locationPin));
-  };
-
   var changePin = function (pin) {
     // установить новую активную метку
     window.pin.changeActivePin(pin);
     // показать карточку с объявлением, соответствующим метке
-    window.showCard(dataOffers[getPinIndex(pin)]);
-  };
-
-  var setOfferLocations = function () {
-    offerLocations = dataOffers.map(function (offerItem) {
-      return getLocationStr(offerItem.location);
-    });
+    window.showCard(dataRenderedOffers[pin.dataset.index]);
   };
 
   // обработчик клика по метке
@@ -63,11 +46,11 @@
   // сохранить данные объявлений
   var saveDataOffers = function (data) {
     dataOffers = data;
-    setOfferLocations();
   };
 
   // отрисовать метки на карте
   var renderPinsOnMap = function (someOffers) {
+    dataRenderedOffers = someOffers;
     mapElement.appendChild(window.pin.renderPinList(someOffers));
   };
 
