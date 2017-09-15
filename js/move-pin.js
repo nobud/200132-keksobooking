@@ -31,7 +31,12 @@
   var movingElement = null;
   var onMouseDown = function (evt) {
     evt.preventDefault();
-    movingElement = evt.target.closest('.pin__main');
+
+    if (evt.target === pinMain) {
+      movingElement = evt.target;
+    } else if (evt.target.parentElement === pinMain) {
+      movingElement = evt.target.parentElement;
+    }
     // запомнить начальные координаты
     startCoords.x = evt.clientX;
     startCoords.y = evt.clientY;

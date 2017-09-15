@@ -31,7 +31,7 @@
   var housingGuestsNumberElement = tokyoFiltersFormElement.querySelector('#housing_guests-number');
   var housingPriceElement = tokyoFiltersFormElement.querySelector('#housing_price');
   var tokyoFiltersetElement = tokyoFiltersFormElement.querySelector('#housing_features');
-  var featuresListElement = tokyoFiltersetElement.elements;
+  var featuresListElement = tokyoFiltersetElement.querySelectorAll('input'); // свойство elements не работает в Edge;
 
   var isGreaterThan = function (value, min) {
     return value > min;

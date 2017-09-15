@@ -26,7 +26,14 @@
 
   // обработчик клика по метке
   var onPinClick = function (evt) {
-    var newPin = evt.target.closest('.pin');
+    var pinClass = window.pin.getPinClass();
+    var newPin;
+    if (evt.target.className === pinClass) {
+      newPin = evt.target;
+    } else if (evt.target.parentElement.className === pinClass) {
+      newPin = evt.target.parentElement;
+    }
+
     // если клик по метке и она не является "главной" меткой
     if (newPin && !newPin.classList.contains('pin__main')) {
       changePin(newPin);

@@ -56,6 +56,10 @@
       activePin.classList.add(PIN_ACTIVE_CLASS);
     },
 
+    getPinClass: function () {
+      return PIN_CLASS;
+    },
+
     // вычислить позицию метки на карте по заданному адресу на карте с учетом размера метки
     calcPinMapPosition: function (location, pinWidth, pinHeight) {
       var offsetX = Math.floor(pinWidth / 2);
